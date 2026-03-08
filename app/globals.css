@@ -1,18 +1,43 @@
 @import "tailwindcss";
 
 @theme {
-  --color-gold: #F5D061;
-  --color-gold-dim: #D4AF37;
-  --color-silver: #E5E5E5;
+  --color-brand-red: #E50000;
+  --color-silver: #E0E0E0;
   --color-silver-dim: #A0A0A0;
   --color-black: #050505;
   --color-black-pure: #000000;
 
-  --font-display: var(--font-unbounded);
-  --font-body: var(--font-space-grotesk);
+  --font-display: var(--font-bebas-neue);
+  --font-body: var(--font-space-mono);
+  --font-syne: var(--font-syne);
+  --font-unifraktur: var(--font-unifraktur);
 }
 
 /* Custom Utilities */
+@utility font-cyber {
+  font-family: var(--font-syne);
+}
+
+@utility font-gothic {
+  font-family: var(--font-unifraktur);
+}
+
+@utility liquid-metal-text {
+  background: linear-gradient(180deg, #FFFFFF 0%, #A0A0A0 20%, #404040 50%, #E0E0E0 55%, #FFFFFF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.8)) drop-shadow(0px -2px 4px rgba(255, 255, 255, 0.3));
+}
+
+@utility gothic-glow-text {
+  background: linear-gradient(180deg, #FFFFFF 0%, #A0A0A0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0px 0px 15px rgba(229, 0, 0, 0.4), 0px 0px 30px rgba(229, 0, 0, 0.2);
+}
+
 @utility text-balance {
   text-wrap: balance;
 }
@@ -71,6 +96,57 @@
   animation: vinyl-glitch 8s ease-in-out infinite;
 }
 
+@keyframes terminal-flicker {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+
+  5% {
+    opacity: 0.8;
+    transform: translate(1px, -1px);
+  }
+
+  10% {
+    opacity: 1;
+    transform: translate(-1px, 0px);
+  }
+
+  15% {
+    opacity: 0.9;
+    transform: translate(0, 1px);
+  }
+
+  20% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+
+  52% {
+    opacity: 0.7;
+    transform: translate(-1px, 1px);
+  }
+
+  55% {
+    opacity: 1;
+    transform: translate(1px, 0px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+
+@utility animate-flicker {
+  animation: terminal-flicker 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+}
+
 /* Base Reset */
 html {
   scroll-behavior: smooth;
@@ -82,6 +158,160 @@ body {
   font-family: var(--font-body);
 }
 
+/* ─── Crop Mark Utility ─── */
+@utility crop-mark-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+/* ─── Marquee Horizontal Keyframe ─── */
+@keyframes marquee-h {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility animate-marquee-h {
+  animation: marquee-h 35s linear infinite;
+}
+
+/* ─── Glitch Bar Flicker ─── */
+@keyframes glitch-bar-flicker {
+
+  0%,
+  100% {
+    opacity: 0.9;
+    transform: translateX(0);
+  }
+
+  25% {
+    opacity: 0.6;
+    transform: translateX(-8px);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateX(5px);
+  }
+
+  75% {
+    opacity: 0.7;
+    transform: translateX(-3px);
+  }
+}
+
+@utility animate-glitch-bar {
+  animation: glitch-bar-flicker 0.12s linear;
+}
+
+/* ─── Lettering Image Shimmer ─── */
+@keyframes metal-shimmer {
+  0% {
+    filter: drop-shadow(0 0 30px rgba(200, 200, 200, 0.1)) drop-shadow(0 0 10px rgba(229, 0, 0, 0.2));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 60px rgba(220, 220, 220, 0.25)) drop-shadow(0 0 20px rgba(229, 0, 0, 0.35));
+  }
+
+  100% {
+    filter: drop-shadow(0 0 30px rgba(200, 200, 200, 0.1)) drop-shadow(0 0 10px rgba(229, 0, 0, 0.2));
+  }
+}
+
+@utility animate-metal-shimmer {
+  animation: metal-shimmer 4s ease-in-out infinite;
+}
+
+/* Dragon neon glow pulse */
+@keyframes dragon-glow {
+  from {
+    filter: drop-shadow(0 0 12px rgba(229, 0, 0, 0.5)) drop-shadow(0 0 30px rgba(229, 0, 0, 0.2)) saturate(1.2) brightness(1.0);
+  }
+
+  to {
+    filter: drop-shadow(0 0 28px rgba(229, 0, 0, 0.85)) drop-shadow(0 0 60px rgba(229, 0, 0, 0.45)) saturate(1.6) brightness(1.35);
+  }
+}
+
+/* ════════════════════════════════════════════
+   LOGO GLITCH — random signal interruption
+   Triggered via JS by toggling animation prop
+   ════════════════════════════════════════════ */
+@keyframes logo-glitch {
+  0% {
+    transform: translate(0, 0) skewX(0deg);
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+
+  10% {
+    transform: translate(-3px, 1px) skewX(-4deg);
+    clip-path: inset(10% 0 60% 0);
+    opacity: 0.85;
+  }
+
+  20% {
+    transform: translate(3px, -1px) skewX(4deg);
+    clip-path: inset(60% 0 10% 0);
+    opacity: 1;
+  }
+
+  30% {
+    transform: translate(-2px, 0) skewX(-2deg);
+    clip-path: inset(30% 0 40% 0);
+    opacity: 0.7;
+  }
+
+  40% {
+    transform: translate(0, 2px);
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(4px, -2px) skewX(6deg);
+    clip-path: inset(50% 0 20% 0);
+    opacity: 0.6;
+  }
+
+  60% {
+    transform: translate(-4px, 1px) skewX(-6deg);
+    clip-path: inset(20% 0 50% 0);
+    opacity: 1;
+  }
+
+  70% {
+    transform: translate(2px, 0) skewX(2deg);
+    clip-path: inset(0 0 0 0);
+    opacity: 0.9;
+  }
+
+  80% {
+    transform: translate(-1px, -1px);
+    clip-path: inset(5% 0 70% 0);
+    opacity: 0.75;
+  }
+
+  90% {
+    transform: translate(1px, 1px) skewX(1deg);
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(0, 0) skewX(0deg);
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
 /* Typography Defaults */
 h1,
 h2,
@@ -90,4 +320,114 @@ h4,
 h5,
 h6 {
   font-family: var(--font-display);
+}
+
+/* ════════════════════════════════════════════
+   CROMO LETTERING — LUMINANCE MASK
+   PNG is used as a mask: white pixels = opaque,
+   black pixels = fully transparent. No black box.
+   ════════════════════════════════════════════ */
+.cromo-luminance-mask {
+  -webkit-mask-image: url('/assets/cromo-lettering-v2.png');
+  mask-image: url('/assets/cromo-lettering-v2.png');
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  /* luminance mode: use pixel brightness as the mask alpha value */
+  -webkit-mask-mode: luminance;
+  mask-mode: luminance;
+}
+
+/* ════════════════════════════════════════════
+   CTA CYBER BUTTON — Chamfered + Glitch Hover
+   ════════════════════════════════════════════ */
+@keyframes cta-glitch {
+  0% {
+    clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0% calc(100% - 14px), 0% 14px);
+    transform: translateX(0) skewX(0);
+  }
+
+  20% {
+    transform: translateX(-3px) skewX(-1deg);
+    filter: hue-rotate(180deg) brightness(1.5);
+  }
+
+  40% {
+    transform: translateX(3px) skewX(1deg);
+    filter: hue-rotate(0deg) brightness(1);
+  }
+
+  60% {
+    transform: translateX(-2px);
+    filter: invert(1) brightness(1.2);
+  }
+
+  80% {
+    transform: translateX(1px) skewX(0.5deg);
+    filter: invert(0);
+  }
+
+  100% {
+    transform: translateX(0) skewX(0);
+    filter: none;
+  }
+}
+
+.cta-cyber-btn {
+  position: relative;
+  display: inline-block;
+  padding: 12px 28px;
+  background-color: #E50000;
+  color: #050505;
+  font-family: var(--font-space-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  /* 8-corner chamfered polygon */
+  clip-path: polygon(14px 0%, calc(100% - 14px) 0%,
+      100% 14px, 100% calc(100% - 14px),
+      calc(100% - 14px) 100%, 14px 100%,
+      0% calc(100% - 14px), 0% 14px);
+  transition: background-color 0.15s ease, color 0.15s ease;
+  overflow: hidden;
+}
+
+.cta-cyber-btn__text {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ghost duplicate for glitch offset */
+.cta-cyber-btn__glitch {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-space-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #00FFFF;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cta-cyber-btn:hover {
+  background-color: #050505;
+  color: #E50000;
+  animation: cta-glitch 0.35s steps(1) 1;
+  outline: 1px solid #E50000;
+  outline-offset: -1px;
+}
+
+.cta-cyber-btn:hover .cta-cyber-btn__glitch {
+  opacity: 0.7;
+  transform: translateX(3px);
+  animation: cta-glitch 0.35s steps(1) 1;
 }

@@ -1,147 +1,170 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import Image from "next/image";
 
 const navLinks = [
-    { href: "#inicio", label: "Inicio" },
-    { href: "#bio", label: "¿Quién es JBD?" },
-    { href: "#producciones", label: "Mis Producciones" },
-    { href: "#booking", label: "Booking" },
+    { href: "#inicio", label: "INICIO" },
+    { href: "#clan", label: "EL CLAN" },
+    { href: "#lineup", label: "LINEUP" },
+    { href: "#iniciacion", label: "INICIACIÓN" },
 ];
+
+/** Randomly fires a 220ms glitch on the logo every 5–12 seconds. */
+function useLogoGlitch() {
+    const [glitching, setGlitching] = useState(false);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+    useEffect(() => {
+        const schedule = () => {
+            const delay = 5000 + Math.random() * 7000;
+            timerRef.current = setTimeout(() => {
+                setGlitching(true);
+                setTimeout(() => { setGlitching(false); schedule(); }, 220);
+            }, delay);
+        };
+        schedule();
+        return () => clearTimeout(timerRef.current);
+    }, []);
+
+    return glitching;
+}
+
+const glitchStyle = (glitching: boolean): React.CSSProperties => ({
+    animation: glitching ? "logo-glitch 0.22s steps(1) 1" : "none",
+    filter: glitching
+        ? "brightness(1.4) drop-shadow(2px 0 0 #E50000) drop-shadow(-2px 0 0 #00FFFF)"
+        : "none",
+    transition: "filter 0.05s linear"
+});
 
 export default function Navbar() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
+    const logoGlitching = useLogoGlitch();
 
-    const handleLinkClick = () => {
-        setIsMobileMenuOpen(false);
-    };
+    const { scrollY } = useScroll();
+    useMotionValueEvent(scrollY, "change", (latest) => {
+        const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+        setIsVisible(latest > vh * 0.9);
+    });
 
-    // Scroll-reveal logic
-    useEffect(() => {
-        const handleScroll = () => {
-            const scrollY = window.scrollY;
-            const threshold = 450; // Show navbar after scrolling ~450px
-
-            if (scrollY > threshold) {
-                setIsVisible(true);
-            } else {
-                setIsVisible(false);
-            }
-        };
-
-        window.addEventListener("scroll", handleScroll);
-
-        // Check initial scroll position
-        handleScroll();
-
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
+    const handleLinkClick = () => setIsMobileMenuOpen(false);
 
     return (
         <>
-            {/* Fixed Navbar - Ghost Bar with Scroll Reveal */}
             <nav
-                className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ease-in-out ${isVisible
-                        ? "opacity-100 translate-y-0 pointer-events-auto bg-black/80 backdrop-blur-md"
-                        : "opacity-0 -translate-y-10 pointer-events-none bg-gradient-to-b from-black/60 to-transparent backdrop-blur-[1px]"
+                className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ease-out bg-black border-b border-brand-red ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
                     }`}
             >
-                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-end gap-6 lg:gap-8">
-                    {/* Desktop: Navigation Links + Logo */}
-                    <div className="hidden md:flex items-center gap-6 lg:gap-8">
-                        {/* Navigation Links */}
-                        {navLinks.map((link) => (
-                            <a
-                                key={link.href}
-                                href={link.href}
-                                className="relative text-white text-sm lg:text-base font-semibold tracking-wide uppercase transition-all duration-300 hover:text-[#C5A059] group"
-                                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                            >
-                                {link.label}
-                                {/* Glow effect on hover */}
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#C5A059] transition-all duration-300 group-hover:w-full group-hover:shadow-[0_0_8px_rgba(197,160,89,0.8)]"></span>
-                            </a>
-                        ))}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
 
-                        {/* Logo - Far Top Right with Large Spacing */}
-                        <a href="#inicio" className="relative ml-16 lg:ml-24">
+                    {/* ── DESKTOP: nav links + logo ── */}
+                    <div className="hidden md:flex items-center w-full justify-between">
+                        <div className="flex gap-8 lg:gap-12">
+                            {navLinks.map((link) => (
+                                <a
+                                    key={link.href}
+                                    href={link.href}
+                                    className="text-white text-sm lg:text-base font-bold tracking-widest uppercase transition-colors duration-300 hover:text-brand-red font-mono"
+                                >
+                                    {link.label}
+                                </a>
+                            ))}
+                        </div>
+                        <a href="#inicio" className="cursor-pointer">
                             <Image
-                                src="/logo.png"
-                                alt="JBD Selektah"
+                                src="/logoeme.png"
+                                alt="cromo Logo"
                                 width={40}
                                 height={40}
-                                className="h-8 lg:h-10 w-auto opacity-80 hover:opacity-100 transition-opacity duration-300"
+                                className="h-8 lg:h-10 w-auto"
                                 quality={90}
+                                style={glitchStyle(logoGlitching)}
                             />
                         </a>
                     </div>
 
-                    {/* Mobile: Logo + Hamburger */}
-                    <div className="md:hidden flex items-center gap-4">
-                        {/* Logo on Mobile */}
-                        <a href="#inicio" className="relative">
+                    {/* ── MOBILE: logo + brutalist [ SYS ] menu toggle ── */}
+                    <div className="md:hidden flex items-center justify-between w-full">
+                        {/* Logo */}
+                        <a href="#inicio" className="flex-shrink-0">
                             <Image
-                                src="/logo.png"
-                                alt="JBD Selektah"
+                                src="/logoeme.png"
+                                alt="cromo Logo"
                                 width={32}
                                 height={32}
-                                className="h-7 w-auto opacity-80"
+                                className="h-7 w-auto"
                                 quality={90}
+                                style={glitchStyle(logoGlitching)}
                             />
                         </a>
 
-                        {/* Hamburger Icon */}
+                        {/* Brutalist // SYS toggle */}
                         <button
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="p-2 text-white hover:text-[#C5A059] transition-colors"
+                            className="relative font-body text-xs tracking-[0.35em] text-white hover:text-brand-red transition-colors duration-200 uppercase border border-white/20 hover:border-brand-red/60 px-3 py-1.5 flex items-center gap-2"
                             aria-label="Toggle menu"
+                            style={{
+                                clipPath: "polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%)"
+                            }}
                         >
                             {isMobileMenuOpen ? (
-                                <X className="w-6 h-6" />
+                                <>
+                                    <span className="text-brand-red">■</span>
+                                    <span>CERRAR</span>
+                                </>
                             ) : (
-                                <Menu className="w-6 h-6" />
+                                <>
+                                    <span className="text-brand-red">▶</span>
+                                    <span>// SYS</span>
+                                </>
                             )}
                         </button>
                     </div>
                 </div>
             </nav>
 
-            {/* Mobile Menu Overlay */}
+            {/* ── MOBILE MENU OVERLAY ── */}
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="fixed inset-0 z-40 bg-black/95 backdrop-blur-lg md:hidden"
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.22, ease: "easeOut" }}
+                        className="fixed inset-x-0 top-[52px] z-40 bg-black border-t border-brand-red md:hidden"
+                        style={{ borderBottom: "1px solid rgba(229,0,0,0.3)" }}
                     >
-                        <motion.div
-                            initial={{ y: -20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: -20, opacity: 0 }}
-                            transition={{ duration: 0.3, delay: 0.1 }}
-                            className="flex flex-col items-center justify-center h-full gap-8 px-6"
-                        >
+                        {/* Tech UI header */}
+                        <div className="flex items-center justify-between px-4 py-2 border-b border-brand-red/20">
+                            <span className="font-body text-[8px] tracking-[0.5em] text-brand-red/60 uppercase">// NAV_SISTEMA</span>
+                            <span className="font-body text-[8px] tracking-[0.4em] text-silver-dim/30 uppercase">KZ-2026</span>
+                        </div>
+
+                        {/* Links */}
+                        <div className="flex flex-col">
                             {navLinks.map((link, index) => (
                                 <motion.a
                                     key={link.href}
                                     href={link.href}
                                     onClick={handleLinkClick}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.3, delay: 0.1 + index * 0.1 }}
-                                    className="text-3xl sm:text-4xl font-bold text-white hover:text-[#C5A059] transition-colors duration-300 uppercase tracking-tight"
-                                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                                    initial={{ opacity: 0, x: -12 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.2, delay: index * 0.05 }}
+                                    className="flex items-center gap-3 px-6 py-4 border-b border-brand-red/10 text-white hover:text-brand-red hover:bg-brand-red/5 transition-colors duration-200 uppercase tracking-widest font-mono text-lg font-bold"
                                 >
+                                    <span className="text-brand-red/60 text-xs font-body tracking-widest">0{index + 1}</span>
                                     {link.label}
                                 </motion.a>
                             ))}
-                        </motion.div>
+                        </div>
+
+                        {/* Footer hint */}
+                        <div className="px-4 py-2">
+                            <span className="font-body text-[7px] tracking-[0.4em] text-silver-dim/25 uppercase">— SELECCIONA DESTINO —</span>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>

@@ -1,48 +1,335 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef, useEffect, useState, useCallback } from "react";
+import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
+import Countdown from "./Countdown";
+import Image from "next/image";
+import Link from "next/link";
 
-export default function Hero() {
+/* ──────────────────────────────────────────
+   Scramble text — idle + hover decrypt loop
+────────────────────────────────────────── */
+const SCRAMBLE_CHARS = "!@#[]_*/░%?▓▒";
+
+function ScrambleText({ text }: { text: string }) {
+    const [display, setDisplay] = useState(text);
+    const rafRef = useRef<number | undefined>(undefined);
+    const hoverRef = useRef(false);
+
+    const scramble = useCallback((fast: boolean) => {
+        let frame = 0;
+        const iterations = fast ? text.length * 3 : text.length;
+        const perFrame = fast ? 1 : 2;
+        const step = () => {
+            frame++;
+            setDisplay(
+                text.split("").map((char, i) => {
+                    if (char === " ") return " ";
+                    if (i < Math.floor(frame / perFrame)) return text[i];
+                    return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+                }).join("")
+            );
+            if (frame < iterations) {
+                rafRef.current = requestAnimationFrame(step);
+            } else {
+                setDisplay(text);
+                if (!hoverRef.current) {
+                    setTimeout(() => {
+                        if (!hoverRef.current) {
+                            const idx = Math.floor(Math.random() * text.replace(/ /g, "").length);
+                            setDisplay(d => d.split("").map((c, i) =>
+                                i === idx && c !== " " ? SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)] : c
+                            ).join(""));
+                            setTimeout(() => setDisplay(text), 90);
+                        }
+                    }, 3000 + Math.random() * 2000);
+                }
+            }
+        };
+        cancelAnimationFrame(rafRef.current!);
+        step();
+    }, [text]);
+
+    useEffect(() => { scramble(false); return () => cancelAnimationFrame(rafRef.current!); }, [scramble]);
+    const onEnter = () => { hoverRef.current = true; scramble(true); };
+    const onLeave = () => { hoverRef.current = false; scramble(false); };
+
     return (
-        <section id="inicio" className="h-screen w-full flex flex-col justify-center items-center text-center relative z-10 px-6">
-            {/* Main Title - Massive, Gold, Unbounded 900 */}
-            <motion.h1
-                className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-gold tracking-tighter uppercase leading-none drop-shadow-2xl cursor-default relative z-10 max-w-[95%] mx-auto"
-                whileHover={{
-                    textShadow: [
-                        "0px 0px 0px #F5D061",
-                        "-2px 0px 0px #ff0000, 2px 0px 0px #0000ff",
-                        "2px 0px 0px #ff0000, -2px 0px 0px #0000ff",
-                        "0px 0px 0px #F5D061"
-                    ],
-                    skewX: [0, -5, 5, 0],
-                    transition: {
-                        duration: 0.2,
-                        repeat: Infinity,
-                        repeatType: "mirror"
-                    }
-                }}
-            >
-                JBD SELEKTAH
-            </motion.h1>
+        <span onMouseEnter={onEnter} onMouseLeave={onLeave} style={{ display: "inline-block", letterSpacing: "0.25em" }}>
+            {display}
+        </span>
+    );
+}
 
-            {/* Subtitle - Syne Font, Extra Bold, White */}
-            <p
-                className="mt-6 md:mt-8 text-sm sm:text-base md:text-xl lg:text-2xl font-extrabold text-white tracking-[0.2em] sm:tracking-[0.3em] md:tracking-[0.5em] lg:tracking-[0.8em] uppercase opacity-90 relative z-10 max-w-[90%] mx-auto"
-                style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800 }}
-            >
-                Pa&apos; la que lo sacuden cuden
-            </p>
+/* ──────────────────────────────────────────
+   Canvas-based black-pixel knockout for cromo lettering.
+   Works regardless of background color.
+────────────────────────────────────────── */
+function CromoLettering({ src, className, style }: { src: string; className?: string; style?: React.CSSProperties }) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
-            {/* Signature Element - Bottom Right */}
-            <div className="absolute bottom-4 right-4 md:bottom-8 md:right-12 z-20 -rotate-2">
-                <p className="text-xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#C5A059] via-white to-[#C5A059] bg-[length:200%_auto] animate-shine uppercase tracking-tight font-display">
-                    #NOLAPARE
-                </p>
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        if (!ctx) return;
+
+        const img = new window.Image();
+        img.crossOrigin = "anonymous";
+        img.src = src;
+        img.onload = () => {
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            ctx.drawImage(img, 0, 0);
+            const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const d = data.data;
+            for (let i = 0; i < d.length; i += 4) {
+                const luma = 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+                const alpha = Math.max(0, Math.min(255, (luma - 30) * (255 / 80)));
+                d[i + 3] = alpha;
+            }
+            ctx.putImageData(data, 0, 0);
+        };
+    }, [src]);
+
+    return <canvas ref={canvasRef} className={className} style={style} />;
+}
+
+/* ──────────────────────────────────────────
+   Detects if the device is coarse-pointer (touch)
+   to disable mouse parallax on mobile/tablet.
+────────────────────────────────────────── */
+function useIsCoarsePointer() {
+    const [coarse, setCoarse] = useState(false);
+    useEffect(() => {
+        const mq = window.matchMedia("(pointer: coarse)");
+        setCoarse(mq.matches);
+        const handler = (e: MediaQueryListEvent) => setCoarse(e.matches);
+        mq.addEventListener("change", handler);
+        return () => mq.removeEventListener("change", handler);
+    }, []);
+    return coarse;
+}
+
+/* ──────────────────────────────────────────
+   Hero Component
+────────────────────────────────────────── */
+export default function Hero() {
+    const containerRef = useRef<HTMLElement>(null);
+    const isCoarsePointer = useIsCoarsePointer();
+
+    const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
+    const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
+
+    const spring = { damping: 22, stiffness: 90, mass: 0.6 };
+    // Parallax values — clamped to 0 on touch devices
+    const skullX = useSpring(useTransform(mouseX, [-0.5, 0.5], isCoarsePointer ? [0, 0] : [-25, 25]), spring);
+    const skullYm = useSpring(useTransform(mouseY, [-0.5, 0.5], isCoarsePointer ? [0, 0] : [-20, 20]), spring);
+    const logoX = useSpring(useTransform(mouseX, [-0.5, 0.5], isCoarsePointer ? [0, 0] : [-12, 12]), spring);
+    const logoYm = useSpring(useTransform(mouseY, [-0.5, 0.5], isCoarsePointer ? [0, 0] : [-10, 10]), spring);
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (isCoarsePointer || !containerRef.current) return;
+        const r = containerRef.current.getBoundingClientRect();
+        mouseX.set((e.clientX - r.left) / r.width - 0.5);
+        mouseY.set((e.clientY - r.top) / r.height - 0.5);
+    };
+    const handleMouseLeave = () => { mouseX.set(0); mouseY.set(0); };
+
+    return (
+        <section
+            ref={containerRef}
+            id="inicio"
+            /* Use 100svh for mobile (accounts for iOS bottom bar) */
+            className="w-full sticky top-0 z-10 overflow-hidden"
+            style={{ backgroundColor: "#050505", perspective: 1200, height: "100svh", minHeight: "100dvh" }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+        >
+            {/* ════════════ CROP MARKS ════════════ */}
+            {/* Only show full crop marks on sm+ screens */}
+            <div className="absolute top-4 left-4 z-50 pointer-events-none opacity-40">
+                <div className="absolute top-0 left-0 w-5 h-px bg-brand-red" />
+                <div className="absolute top-0 left-0 w-px h-5 bg-brand-red" />
+                <span className="absolute top-2.5 left-2.5 font-body text-[6px] text-brand-red tracking-widest hidden sm:block">38.4N // 28.7W</span>
+            </div>
+            <div className="absolute top-4 right-4 z-50 pointer-events-none opacity-40 text-right">
+                <div className="absolute top-0 right-0 w-5 h-px bg-silver-dim" />
+                <div className="absolute top-0 right-0 w-px h-5 bg-silver-dim" />
+                <span className="absolute top-2.5 right-2.5 font-body text-[6px] text-silver-dim tracking-widest hidden sm:block">SYS.ID: KZ-2026</span>
+            </div>
+            <div className="absolute bottom-6 right-4 z-50 pointer-events-none opacity-40 text-right hidden sm:block">
+                <div className="absolute bottom-0 right-0 w-5 h-px bg-brand-red" />
+                <div className="absolute bottom-0 right-0 w-px h-5 bg-brand-red" />
+                <span className="absolute bottom-2.5 right-2.5 font-body text-[6px] text-brand-red tracking-widest">クロモ // v.01</span>
             </div>
 
-            {/* Smooth Gradient Fade Transition - Extremely Transparent */}
-            <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-transparent via-transparent to-transparent z-20 pointer-events-none"></div>
+            {/* ════════════ BASE BG — noise grain ════════════ */}
+            <motion.div className="absolute inset-0 z-0" style={{ y: backgroundY, backgroundColor: "#050505" }}>
+                <div
+                    className="absolute inset-0 opacity-[0.07]"
+                    style={{
+                        backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"n\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.85\" numOctaves=\"3\" stitchTiles=\"stitch\"/%3E%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23n)\"/%3E%3C/svg%3E')",
+                        backgroundSize: "300px 300px"
+                    }}
+                />
+                <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 30% 50%, transparent 40%, rgba(5,5,5,0.7) 100%)" }} />
+            </motion.div>
+
+            {/* ════════════ LAYER 1: SKULL ════════════ */}
+            {/*
+              MOBILE:  Centered, fills ~100% vw, opacity-20 → pure texture/atmosphere
+              DESKTOP: Massive bleed off right+top, opacity-45, luminosity blend
+            */}
+            <motion.div
+                className="absolute z-[10] pointer-events-none"
+                style={{
+                    // Mobile: centered texture
+                    inset: 0,
+                    x: skullX,
+                    y: skullYm
+                }}
+            >
+                {/* Mobile skull — centered, faded, texture-only */}
+                <div className="absolute inset-0 md:hidden flex items-center justify-center">
+                    <div className="relative w-full h-full">
+                        <Image
+                            src="/mask.jpg"
+                            alt=""
+                            fill
+                            priority
+                            className="object-cover object-center"
+                            style={{ opacity: 0.18, filter: "brightness(0.6) contrast(1.2)" }}
+                        />
+                        {/* Full screen fade so it's pure atmosphere */}
+                        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, rgba(5,5,5,0) 30%, rgba(5,5,5,0.9) 80%)" }} />
+                    </div>
+                </div>
+
+                {/* Desktop skull — asymmetric bleed right+top */}
+                <div
+                    className="absolute hidden md:block"
+                    style={{ right: "-5%", top: "-5%", width: "70vw", height: "115vh" }}
+                >
+                    <Image
+                        src="/mask.jpg"
+                        alt=""
+                        fill
+                        priority
+                        className="object-cover"
+                        style={{
+                            objectPosition: "center 30%",   /* Reveal the face more */
+                            opacity: 0.50,
+                            mixBlendMode: "luminosity",
+                            filter: "brightness(0.85) contrast(1.15)"
+                        }}
+                    />
+                    <div className="absolute inset-0" style={{ background: "linear-gradient(to right, #050505 0%, rgba(5,5,5,0.5) 30%, transparent 65%)" }} />
+                    <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 75% 30%, rgba(229,0,0,0.14) 0%, transparent 55%)" }} />
+                </div>
+            </motion.div>
+
+            {/* ════════════ LAYER 2: cromo LETTERING ════════════ */}
+            {/*
+              MOBILE:  Centered, w-[82vw], vertically positioned at ~22% from top
+              DESKTOP: Left-aligned at 6vw, top 14%
+            */}
+            <motion.div
+                className="absolute z-[25] pointer-events-none
+                           left-1/2 -translate-x-1/2 top-[22%]
+                           md:left-[5vw] md:translate-x-0 md:top-[12%]"
+                style={{ x: logoX, y: logoYm }}
+                initial={{ opacity: 0, y: -20, filter: "blur(20px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: 1.1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            >
+                <CromoLettering
+                    src="/assets/cromo-lettering.png"
+                    className="animate-metal-shimmer block"
+                    style={{
+                        /* Mobile: 85vw clamped to 340px; desktop override below */
+                        width: "clamp(260px, 85vw, 340px)",
+                        height: "auto",
+                        filter: "drop-shadow(0 0 22px rgba(229,0,0,0.4)) drop-shadow(0 0 55px rgba(220,220,220,0.08))"
+                    }}
+                />
+                {/* desktop: wider, more prominent */}
+                <style>{`@media(min-width:768px){.cromo-canvas{width:clamp(380px,55vw,760px)!important}}`}</style>
+            </motion.div>
+
+            {/* ════════════ LAYER 3: HUD — countdown + CTA ════════════ */}
+            {/*
+              MOBILE:  Centered, anchored to bottom with pb-safe-area
+              DESKTOP: Bottom-left at 6vw
+            */}
+            <motion.div
+                className="absolute z-[30]
+                           bottom-6 left-1/2 -translate-x-1/2 w-[88vw] max-w-xs
+                           md:bottom-10 md:left-[6vw] md:translate-x-0 md:w-auto md:max-w-none"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.9, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+                <div className="relative pl-3 border-l border-brand-red/50">
+                    {/* Top HUD bar */}
+                    <div className="absolute -top-1 left-0 w-full h-px bg-gradient-to-r from-brand-red/60 via-brand-red/20 to-transparent" />
+
+                    {/* Sys header — hidden on smallest screens to save space */}
+                    <p className="font-body text-[8px] tracking-[0.35em] text-silver-dim/60 uppercase mb-1 hidden xs:block">
+                        // OBFUSCATED ORIGIN // DOBLE KAOZ SYSTEM // システム異常
+                    </p>
+
+                    {/* Progress / signal bar */}
+                    <div className="flex items-center gap-2 mb-1.5">
+                        <span className="font-body text-[8px] text-brand-red/70 tracking-widest">SIG</span>
+                        <span className="font-body text-[10px] text-brand-red tracking-[0.12em]">[██████████░░░░]</span>
+                        <span className="font-body text-[8px] text-silver-dim/50">71%</span>
+                    </div>
+
+                    {/* Countdown */}
+                    <Countdown />
+
+                    {/* Secondary HUD line */}
+                    <p className="font-body text-[7px] tracking-[0.3em] text-silver-dim/40 mt-1 uppercase hidden sm:block">
+                        FASE_01 // LAT: 18.47N // CROMO COLLECTION 2026
+                    </p>
+
+                    {/* CTA BUTTON */}
+                    <div className="mt-3">
+                        <Link href="#lookbook" className="cta-cyber-btn">
+                            <ScrambleText text="ADQUIRIR ACCESO" />
+                            <span
+                                aria-hidden
+                                style={{
+                                    position: "absolute", inset: 0,
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    color: "#00FFFF", opacity: 0,
+                                    fontFamily: "inherit", fontSize: "inherit",
+                                    fontWeight: "inherit", letterSpacing: "inherit",
+                                    pointerEvents: "none", transition: "opacity 0.1s"
+                                }}
+                            >
+                                ADQUIRIR ACCESO
+                            </span>
+                        </Link>
+                    </div>
+
+                    {/* Bottom HUD bar */}
+                    <div className="absolute -bottom-1 left-0 w-2/3 h-px bg-gradient-to-r from-brand-red/40 to-transparent" />
+                </div>
+            </motion.div>
+
+            {/* ════════════ SCANLINES ════════════ */}
+            <div
+                className="pointer-events-none absolute inset-0 z-[35] opacity-[0.18]"
+                style={{
+                    backgroundImage: "repeating-linear-gradient(transparent, transparent 1px, rgba(0,0,0,0.3) 1px, rgba(0,0,0,0.3) 2px)",
+                    backgroundSize: "100% 3px"
+                }}
+            />
         </section>
     );
 }

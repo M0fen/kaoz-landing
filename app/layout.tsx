@@ -1,30 +1,34 @@
 import type { Metadata } from "next";
-import { Unbounded, Space_Grotesk, Syne } from "next/font/google";
-import Image from "next/image";
+import { Bebas_Neue, Space_Mono, Syne, UnifrakturMaguntia } from "next/font/google";
 import "./globals.css";
 
-const unbounded = Unbounded({
+const bebasNeue = Bebas_Neue({
   subsets: ["latin"],
-  variable: "--font-unbounded",
-  weight: ["300", "900"],
+  variable: "--font-bebas-neue",
+  weight: ["400"],
 });
 
-const spaceGrotesk = Space_Grotesk({
+const spaceMono = Space_Mono({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
-  // Space Grotesk is a variable font by default usually, but we can specify if needed.
-  // Default is fine.
+  variable: "--font-space-mono",
+  weight: ["400", "700"],
 });
 
 const syne = Syne({
   subsets: ["latin"],
   variable: "--font-syne",
-  weight: ["800"],
+  weight: ["400", "700", "800"],
+});
+
+const unifraktur = UnifrakturMaguntia({
+  subsets: ["latin"],
+  variable: "--font-unifraktur",
+  weight: ["400"],
 });
 
 export const metadata: Metadata = {
-  title: "JBD SELEKTAH | El Ritmo de la Calle",
-  description: "Official EPK of JBD Selektah",
+  title: "DOBLE KAOZ | cromo Collection",
+  description: "Doble Kaoz - Underground Techwear & Acid Graphics Fashion",
 };
 
 export default function RootLayout({
@@ -35,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${unbounded.variable} ${spaceGrotesk.variable} ${syne.variable} antialiased bg-black text-silver selection:bg-gold selection:text-black overflow-x-hidden`}
+        className={`${bebasNeue.variable} ${spaceMono.variable} ${syne.variable} ${unifraktur.variable} antialiased bg-black text-silver selection:bg-brand-red selection:text-white overflow-x-hidden`}
       >
         {children}
       </body>

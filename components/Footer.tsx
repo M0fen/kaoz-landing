@@ -7,7 +7,7 @@ export default function Footer() {
 
                 {/* Copyright Text */}
                 <p className="text-zinc-600 text-xs sm:text-sm font-mono text-center">
-                    © {new Date().getFullYear()} JBD SELEKTAH. EL RITMO DE LA CALLE.
+                    © {new Date().getFullYear()} K A O Z
                 </p>
             </div>
         </footer>
