@@ -238,9 +238,7 @@ export default function Hero() {
               DESKTOP: Left-aligned at 6vw, top 14%
             */}
             <motion.div
-                className="absolute z-[25] pointer-events-none
-                           left-1/2 -translate-x-1/2 top-[22%]
-                           md:left-[5vw] md:translate-x-0 md:top-[12%]"
+                className="absolute top-[55%] left-[30%] -translate-x-1/2 -translate-y-1/2 w-[75vw] max-w-4xl z-[25] pointer-events-none"
                 style={{ x: logoX, y: logoYm }}
                 initial={{ opacity: 0, y: -20, filter: "blur(20px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -250,14 +248,11 @@ export default function Hero() {
                     src="/assets/cromo-lettering.png"
                     className="animate-metal-shimmer block"
                     style={{
-                        /* Mobile: 85vw clamped to 340px; desktop override below */
-                        width: "clamp(260px, 85vw, 340px)",
+                        width: "100%",
                         height: "auto",
                         filter: "drop-shadow(0 0 22px rgba(229,0,0,0.4)) drop-shadow(0 0 55px rgba(220,220,220,0.08))"
                     }}
                 />
-                {/* desktop: wider, more prominent */}
-                <style>{`@media(min-width:768px){.cromo-canvas{width:clamp(380px,55vw,760px)!important}}`}</style>
             </motion.div>
 
             {/* ════════════ LAYER 3: HUD — countdown + CTA ════════════ */}

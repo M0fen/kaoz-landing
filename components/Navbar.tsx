@@ -1,8 +1,68 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import Image from "next/image";
+
+/* ────────────────────────────────────────────
+   ScrambleText — identical logic to Hero CTA button,
+   independent per-instance, triggers on hover.
+──────────────────────────────────────────── */
+const SCRAMBLE_CHARS = "!@#[]_*/░%?▓▒";
+
+function ScrambleText({ text }: { text: string }) {
+    const [display, setDisplay] = useState(text);
+    const rafRef = useRef<number | undefined>(undefined);
+    const hoverRef = useRef(false);
+
+    const scramble = useCallback((fast: boolean) => {
+        let frame = 0;
+        const iterations = fast ? text.length * 3 : text.length;
+        const perFrame = fast ? 1 : 2;
+        const step = () => {
+            frame++;
+            setDisplay(
+                text.split("").map((char, i) => {
+                    if (char === " ") return " ";
+                    if (i < Math.floor(frame / perFrame)) return text[i];
+                    return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+                }).join("")
+            );
+            if (frame < iterations) {
+                rafRef.current = requestAnimationFrame(step);
+            } else {
+                setDisplay(text);
+                if (!hoverRef.current) {
+                    setTimeout(() => {
+                        if (!hoverRef.current) {
+                            const idx = Math.floor(Math.random() * text.replace(/ /g, "").length);
+                            setDisplay(d => d.split("").map((c, i) =>
+                                i === idx && c !== " " ? SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)] : c
+                            ).join(""));
+                            setTimeout(() => setDisplay(text), 90);
+                        }
+                    }, 3000 + Math.random() * 2000);
+                }
+            }
+        };
+        cancelAnimationFrame(rafRef.current!);
+        step();
+    }, [text]);
+
+    useEffect(() => { scramble(false); return () => cancelAnimationFrame(rafRef.current!); }, [scramble]);
+    const onEnter = () => { hoverRef.current = true; scramble(true); };
+    const onLeave = () => { hoverRef.current = false; scramble(false); };
+
+    return (
+        <span
+            onMouseEnter={onEnter}
+            onMouseLeave={onLeave}
+            style={{ display: "inline-block", letterSpacing: "0.22em", fontFamily: "'Space Mono', monospace" }}
+        >
+            {display}
+        </span>
+    );
+}
 
 const navLinks = [
     { href: "#inicio", label: "INICIO" },
@@ -67,9 +127,10 @@ export default function Navbar() {
                                 <a
                                     key={link.href}
                                     href={link.href}
-                                    className="text-white text-sm lg:text-base font-bold tracking-widest uppercase transition-colors duration-300 hover:text-brand-red font-mono"
+                                    className="text-white text-sm lg:text-base font-bold uppercase transition-colors duration-300 hover:text-brand-red"
+                                    style={{ fontFamily: "'Space Mono', monospace" }}
                                 >
-                                    {link.label}
+                                    <ScrambleText text={link.label} />
                                 </a>
                             ))}
                         </div>
@@ -153,10 +214,11 @@ export default function Navbar() {
                                     initial={{ opacity: 0, x: -12 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ duration: 0.2, delay: index * 0.05 }}
-                                    className="flex items-center gap-3 px-6 py-4 border-b border-brand-red/10 text-white hover:text-brand-red hover:bg-brand-red/5 transition-colors duration-200 uppercase tracking-widest font-mono text-lg font-bold"
+                                    className="flex items-center gap-3 px-6 py-4 border-b border-brand-red/10 text-white hover:text-brand-red hover:bg-brand-red/5 transition-colors duration-200 uppercase font-bold text-lg"
+                                    style={{ fontFamily: "'Space Mono', monospace" }}
                                 >
                                     <span className="text-brand-red/60 text-xs font-body tracking-widest">0{index + 1}</span>
-                                    {link.label}
+                                    <ScrambleText text={link.label} />
                                 </motion.a>
                             ))}
                         </div>

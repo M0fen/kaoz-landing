@@ -53,36 +53,53 @@ export default function EventLineup() {
                 <p className="font-body text-[7px] tracking-[0.3em] text-silver-dim/30 uppercase hidden sm:block">SYS.ID: KZ-LINEUP-2026</p>
             </div>
 
-            {/* ── Neon Dragon — background atmosphere ── */}
+            {/* ── Neon Dragon — engraved atmosphere ── */}
             <div
-                className="absolute z-[1] pointer-events-none overflow-hidden"
+                className="absolute z-[1] pointer-events-none"
                 style={{
-                    /* Spans the lower-right quadrant, slightly bleeds off edges */
-                    bottom: "-5%",
-                    right: "-8%",
-                    width: "min(65vw, 680px)",
-                    height: "min(55vh, 480px)",
-                    opacity: 0.22,
+                    bottom: "-8%",
+                    right: "-10%",
+                    width: "min(75vw, 700px)",
+                    height: "min(68vh, 600px)",
                 }}
             >
+                {/* The dragon itself — screen blend erases black, reveals neon lines */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                     src="/assets/neon-dragon.png"
                     alt=""
                     style={{
+                        position: "absolute",
+                        inset: 0,
                         width: "100%",
                         height: "100%",
                         objectFit: "contain",
                         objectPosition: "right bottom",
-                        mixBlendMode: "screen",          /* Black bg becomes invisible */
-                        filter: "drop-shadow(0 0 18px rgba(229,0,0,0.6)) drop-shadow(0 0 40px rgba(229,0,0,0.3)) saturate(1.4) brightness(1.2)",
+                        mixBlendMode: "screen",
+                        opacity: 0.55,
+                        filter: "drop-shadow(0 0 14px rgba(229,0,0,0.9)) drop-shadow(0 0 36px rgba(229,0,0,0.45)) saturate(1.8) brightness(1.35) contrast(1.2)",
                         animation: "dragon-glow 3s ease-in-out infinite alternate",
                     }}
                 />
-                {/* Subtle bottom fade so dragon dissolves into floor */}
+                {/* Noise/grain overlay — multiply blend lets the concrete texture show through the neon */}
                 <div
-                    className="absolute inset-x-0 bottom-0 h-1/3"
-                    style={{ background: "linear-gradient(to top, #050505, transparent)" }}
+                    style={{
+                        position: "absolute",
+                        inset: 0,
+                        mixBlendMode: "multiply",
+                        opacity: 0.45,
+                        backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"n\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.75\" numOctaves=\"4\" stitchTiles=\"stitch\"/%3E%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23n)\" opacity=\"1\"/%3E%3C/svg%3E')",
+                        backgroundSize: "180px 180px",
+                    }}
+                />
+                {/* Edge fade — dissolve into the floor and right edge */}
+                <div
+                    style={{
+                        position: "absolute",
+                        inset: 0,
+                        background: "linear-gradient(to top, #050505 0%, transparent 35%), linear-gradient(to left, transparent 55%, #050505 100%)",
+                        pointerEvents: "none",
+                    }}
                 />
             </div>
 

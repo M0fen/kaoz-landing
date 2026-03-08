@@ -19,7 +19,51 @@ const lookbookImages = [
 
 export default function LookbookCarousel() {
     return (
-        <section id="lookbook" className="sticky top-0 h-screen z-20 bg-black pt-24 pb-12 overflow-hidden border-t border-brand-red/20 flex flex-col justify-center">
+        <section id="lookbook" className="sticky top-0 h-screen z-20 bg-black pt-24 pb-12 overflow-hidden border-t border-brand-red/20 flex flex-col justify-center relative">
+            {/* ── Vertical Japanese Marquee — far-left margin ── */}
+            <div
+                style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: '28px',
+                    zIndex: 10,
+                    overflow: 'hidden',
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
+                <motion.div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1.6em',
+                        opacity: 0.38,
+                        fontFamily: "'Noto Sans JP', 'Space Mono', monospace",
+                        fontSize: '11px',
+                        letterSpacing: '0.15em',
+                        color: 'rgba(229,0,0,0.85)',
+                        writingMode: 'vertical-rl',
+                        textOrientation: 'mixed',
+                        whiteSpace: 'nowrap',
+                        userSelect: 'none',
+                    }}
+                    animate={{ y: ['0%', '-50%'] }}
+                    transition={{
+                        duration: 18,
+                        repeat: Infinity,
+                        ease: 'linear',
+                    }}
+                >
+                    {/* Repeated twice so the loop is seamless */}
+                    {Array.from({ length: 16 }).map((_, i) => (
+                        <span key={i} style={{ display: 'block' }}>混沌</span>
+                    ))}
+                </motion.div>
+            </div>
             <style dangerouslySetInnerHTML={{
                 __html: `
         .my-swiper .swiper-button-next,
