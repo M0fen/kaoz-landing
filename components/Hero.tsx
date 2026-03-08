@@ -238,7 +238,7 @@ export default function Hero() {
               DESKTOP: Left-aligned at 6vw, top 14%
             */}
             <motion.div
-                className="absolute top-[55%] left-[30%] -translate-x-1/2 -translate-y-1/2 w-[75vw] max-w-4xl z-[25] pointer-events-none"
+                className="absolute top-[55%] left-1/2 md:left-[30%] -translate-x-1/2 -translate-y-1/2 w-[90vw] md:w-[75vw] max-w-4xl z-[25] pointer-events-none"
                 style={{ x: logoX, y: logoYm }}
                 initial={{ opacity: 0, y: -20, filter: "blur(20px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
