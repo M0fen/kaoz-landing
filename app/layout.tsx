@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bebas_Neue, Space_Mono, Syne, UnifrakturMaguntia, Noto_Sans_JP } from "next/font/google";
+import { Bebas_Neue, Space_Mono, Syne, UnifrakturMaguntia, Noto_Sans_JP, Orbitron } from "next/font/google";
 import "./globals.css";
 
 const bebasNeue = Bebas_Neue({
@@ -32,6 +32,12 @@ const notoSansJP = Noto_Sans_JP({
   weight: ["400", "700"],
 });
 
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  variable: "--font-orbitron",
+  weight: ["400", "700", "900"],
+});
+
 export const metadata: Metadata = {
   title: "DOBLE KAOZ | cromo Collection",
   description: "Doble Kaoz - Underground Techwear & Acid Graphics Fashion",
@@ -45,7 +51,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${bebasNeue.variable} ${spaceMono.variable} ${syne.variable} ${unifraktur.variable} ${notoSansJP.variable} antialiased bg-black text-silver selection:bg-brand-red selection:text-white overflow-x-hidden`}
+        className={`${bebasNeue.variable} ${spaceMono.variable} ${syne.variable} ${unifraktur.variable} ${notoSansJP.variable} ${orbitron.variable} antialiased bg-black text-silver selection:bg-brand-red selection:text-white overflow-x-hidden`}
       >
         {children}
       </body>

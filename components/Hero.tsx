@@ -96,6 +96,119 @@ function CromoLettering({ src, className, style }: { src: string; className?: st
 }
 
 /* ──────────────────────────────────────────
+   SVG Circular Transmission Dial — 71% on mount
+────────────────────────────────────────── */
+function HudSignalBar() {
+    const [count, setCount] = useState(0);
+    const [glitch, setGlitch] = useState(false);
+
+    const SIZE = 56;
+    const STROKE = 4;
+    const R = (SIZE - STROKE) / 2;
+    const CIRCUMFERENCE = 2 * Math.PI * R;
+
+    useEffect(() => {
+        const total = 71;
+        const duration = 1000; // ms
+        const start = performance.now();
+        let rafId: number;
+        const tick = (now: number) => {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = Math.round(eased * total);
+            setCount(current);
+            if (progress < 1) {
+                rafId = requestAnimationFrame(tick);
+            } else {
+                setCount(total);
+                setGlitch(true);
+                setTimeout(() => setGlitch(false), 250);
+            }
+        };
+        setTimeout(() => { rafId = requestAnimationFrame(tick); }, 300);
+        return () => cancelAnimationFrame(rafId);
+    }, []);
+
+    const pct = count / 71;
+    const dashOffset = CIRCUMFERENCE * (1 - pct);
+
+    return (
+        <div className="flex items-center gap-3 mb-1.5">
+            <span className="font-body text-[8px] text-brand-red/60 tracking-widest">SIG</span>
+
+            {/* ── Circular SVG dial ── */}
+            <div className="relative flex-shrink-0" style={{ width: SIZE, height: SIZE }}>
+                <svg
+                    width={SIZE}
+                    height={SIZE}
+                    viewBox={`0 0 ${SIZE} ${SIZE}`}
+                    style={{ transform: "rotate(-90deg)" }}
+                >
+                    {/* Outer rotating track ring */}
+                    <circle
+                        cx={SIZE / 2}
+                        cy={SIZE / 2}
+                        r={R}
+                        fill="none"
+                        stroke="rgba(229,0,0,0.08)"
+                        strokeWidth={STROKE}
+                    />
+                    {/* Thin outer orbit ring with gaps — decorative */}
+                    <circle
+                        cx={SIZE / 2}
+                        cy={SIZE / 2}
+                        r={R + 4}
+                        fill="none"
+                        stroke="rgba(229,0,0,0.15)"
+                        strokeWidth={0.5}
+                        strokeDasharray="2 6"
+                        style={{
+                            transformOrigin: `${SIZE / 2}px ${SIZE / 2}px`,
+                            animation: "spin 12s linear infinite",
+                        }}
+                    />
+                    {/* Progress arc */}
+                    <circle
+                        cx={SIZE / 2}
+                        cy={SIZE / 2}
+                        r={R}
+                        fill="none"
+                        stroke="#E50000"
+                        strokeWidth={STROKE}
+                        strokeLinecap="butt"
+                        strokeDasharray={`${CIRCUMFERENCE}`}
+                        strokeDashoffset={dashOffset}
+                        style={{
+                            transition: "stroke-dashoffset 0.04s linear",
+                            filter: count > 0 ? "drop-shadow(0 0 3px rgba(229,0,0,0.7))" : "none",
+                        }}
+                    />
+                </svg>
+
+                {/* Center text */}
+                <div
+                    className="absolute inset-0 flex flex-col items-center justify-center"
+                    style={{
+                        gap: "0px",
+                        color: glitch ? "#E50000" : "rgba(255,255,255,0.85)",
+                        textShadow: glitch ? "1px 0 0 #00FFFF" : "none",
+                        transition: "color 0.05s",
+                    }}
+                >
+                    <span className="font-body tabular-nums" style={{ fontSize: "12px", lineHeight: 1, fontWeight: 700 }}>
+                        {count}
+                    </span>
+                    <span className="font-body" style={{ fontSize: "7px", lineHeight: 1.2, color: "rgba(229,0,0,0.7)" }}>
+                        %
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ──────────────────────────────────────────
    Detects if the device is coarse-pointer (touch)
    to disable mouse parallax on mobile/tablet.
 ────────────────────────────────────────── */
@@ -145,7 +258,12 @@ export default function Hero() {
             id="inicio"
             /* Use 100svh for mobile (accounts for iOS bottom bar) */
             className="w-full sticky top-0 z-10 overflow-hidden"
-            style={{ backgroundColor: "#050505", perspective: 1200, height: "100svh", minHeight: "100dvh" }}
+            style={{
+                backgroundColor: "#050505",
+                perspective: 1200,
+                height: "100svh",
+                minHeight: "100dvh",
+            }}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
@@ -271,18 +389,17 @@ export default function Hero() {
                 <div className="relative pl-3 border-l border-brand-red/50">
                     {/* Top HUD bar */}
                     <div className="absolute -top-1 left-0 w-full h-px bg-gradient-to-r from-brand-red/60 via-brand-red/20 to-transparent" />
+                    
+                    {/* Vertical Scanline */}
+                    <div className="animate-scanline overflow-hidden rounded-md" />
 
                     {/* Sys header — hidden on smallest screens to save space */}
                     <p className="font-body text-[8px] tracking-[0.35em] text-silver-dim/60 uppercase mb-1 hidden xs:block">
                         // OBFUSCATED ORIGIN // DOBLE KAOZ SYSTEM // システム異常
                     </p>
 
-                    {/* Progress / signal bar */}
-                    <div className="flex items-center gap-2 mb-1.5">
-                        <span className="font-body text-[8px] text-brand-red/70 tracking-widest">SIG</span>
-                        <span className="font-body text-[10px] text-brand-red tracking-[0.12em]">[██████████░░░░]</span>
-                        <span className="font-body text-[8px] text-silver-dim/50">71%</span>
-                    </div>
+                    {/* Progress / signal bar — animated on mount */}
+                    <HudSignalBar />
 
                     {/* Countdown */}
                     <Countdown />
@@ -293,22 +410,36 @@ export default function Hero() {
                     </p>
 
                     {/* CTA BUTTON */}
-                    <div className="mt-3">
-                        <Link href="#lookbook" className="cta-cyber-btn">
-                            <ScrambleText text="ADQUIRIR ACCESO" />
-                            <span
-                                aria-hidden
+                    <div className="mt-4 mb-2">
+                        <Link href="#lookbook" className="group inline-flex items-center justify-start">
+                            <button
+                                className="relative bg-transparent border border-brand-red/50 hover:border-brand-red hover:bg-brand-red/10 transition-all duration-300 overflow-hidden"
                                 style={{
-                                    position: "absolute", inset: 0,
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    color: "#00FFFF", opacity: 0,
-                                    fontFamily: "inherit", fontSize: "inherit",
-                                    fontWeight: "inherit", letterSpacing: "inherit",
-                                    pointerEvents: "none", transition: "opacity 0.1s"
+                                    minWidth: "220px",
+                                    height: "38px",
+                                    padding: "0 18px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "flex-start",
+                                    gap: "8px",
                                 }}
                             >
-                                ADQUIRIR ACCESO
-                            </span>
+                                {/* Left accent bar */}
+                                <span
+                                    className="shrink-0 bg-brand-red"
+                                    style={{ width: "3px", height: "14px", display: "block" }}
+                                    aria-hidden="true"
+                                />
+                                {/* Scanline fill on hover */}
+                                <span className="absolute inset-0 bg-brand-red/10 scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-500 ease-out" />
+                                {/* Text */}
+                                <span
+                                    className="relative z-10 font-body text-brand-red tracking-[0.22em] text-[11px] uppercase font-bold select-none"
+                                    style={{ letterSpacing: "0.22em" }}
+                                >
+                                    <ScrambleText text="ADQUIRIR ACCESO //" />
+                                </span>
+                            </button>
                         </Link>
                     </div>
 

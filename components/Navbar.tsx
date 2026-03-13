@@ -115,7 +115,7 @@ export default function Navbar() {
     return (
         <>
             <nav
-                className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ease-out bg-black border-b border-brand-red ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
+                className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ease-out bg-black/60 backdrop-blur-md border-b border-brand-red/70 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
                     }`}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
@@ -123,26 +123,36 @@ export default function Navbar() {
                     {/* ── DESKTOP: nav links + logo ── */}
                     <div className="hidden md:flex items-center w-full justify-between">
                         <div className="flex gap-8 lg:gap-12">
-                            {navLinks.map((link) => (
+                            {navLinks.map((link, i) => (
                                 <a
                                     key={link.href}
                                     href={link.href}
                                     className="text-white text-sm lg:text-base font-bold uppercase transition-colors duration-300 hover:text-brand-red"
                                     style={{ fontFamily: "'Space Mono', monospace" }}
                                 >
-                                    <ScrambleText text={link.label} />
+                                    <span
+                                        className="inline-block animate-nav-glitch"
+                                        style={{ animationDelay: `${i * 3.1}s` }}
+                                    >
+                                        <ScrambleText text={link.label} />
+                                    </span>
                                 </a>
                             ))}
                         </div>
                         <a href="#inicio" className="cursor-pointer">
                             <Image
-                                src="/logoeme.png"
+                                src="/assets/logo-kaoz-transparent.png"
                                 alt="cromo Logo"
                                 width={40}
                                 height={40}
                                 className="h-8 lg:h-10 w-auto"
                                 quality={90}
-                                style={glitchStyle(logoGlitching)}
+                                style={{
+                                    ...glitchStyle(logoGlitching),
+                                    filter: logoGlitching
+                                        ? "brightness(1.4) drop-shadow(2px 0 0 #E50000) drop-shadow(-2px 0 0 #00FFFF) drop-shadow(0 0 8px rgba(255,0,0,0.9))"
+                                        : "drop-shadow(0 0 8px rgba(255,0,0,0.8))"
+                                }}
                             />
                         </a>
                     </div>
@@ -152,13 +162,18 @@ export default function Navbar() {
                         {/* Logo */}
                         <a href="#inicio" className="flex-shrink-0">
                             <Image
-                                src="/logoeme.png"
+                                src="/assets/logo-kaoz-transparent.png"
                                 alt="cromo Logo"
                                 width={32}
                                 height={32}
                                 className="h-7 w-auto"
                                 quality={90}
-                                style={glitchStyle(logoGlitching)}
+                                style={{
+                                    ...glitchStyle(logoGlitching),
+                                    filter: logoGlitching
+                                        ? "brightness(1.4) drop-shadow(2px 0 0 #E50000) drop-shadow(-2px 0 0 #00FFFF) drop-shadow(0 0 8px rgba(255,0,0,0.9))"
+                                        : "drop-shadow(0 0 8px rgba(255,0,0,0.8))"
+                                }}
                             />
                         </a>
 

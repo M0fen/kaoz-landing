@@ -2,10 +2,12 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import LookbookCarousel from "@/components/LookbookCarousel";
 import EventLineup from "@/components/EventLineup";
+import TerminalCTA from "@/components/TerminalCTA";
 import FloatingQuiz from "@/components/FloatingQuiz";
 import Footer from "@/components/Footer";
 import Marquees from "@/components/Marquees";
 import GlitchTransition from "@/components/GlitchTransition";
+import ScrollFadeSection from "@/components/ScrollFadeSection";
 import { CrosshairDetail, BarcodeDetail, JpCoordDetail } from "@/components/TechUIDetails";
 
 export default function Home() {
@@ -22,10 +24,20 @@ export default function Home() {
       <Marquees />
 
       {/* Scrollable Content */}
-      <div className="relative z-10 flex flex-col w-full">
-        <Hero />
-        <LookbookCarousel />
-        <EventLineup />
+      <div className="relative z-10 flex flex-col w-full bg-black">
+        <ScrollFadeSection>
+          <Hero />
+        </ScrollFadeSection>
+
+        <ScrollFadeSection>
+          <LookbookCarousel />
+        </ScrollFadeSection>
+
+        <ScrollFadeSection>
+          <EventLineup />
+        </ScrollFadeSection>
+        
+        <TerminalCTA />
         <Footer />
       </div>
 
