@@ -633,3 +633,143 @@ h6 {
   transform: translateX(3px);
   animation: cta-glitch 0.35s steps(1) 1;
 }
+
+/* ════════════════════════════════════════════
+   HUD DIAL BLOOM PULSE — gentle, slow, alive
+   Pulses opacity + brightness cyclically to
+   simulate a "breathing" technical display.
+   ════════════════════════════════════════════ */
+@keyframes hud-bloom {
+  0%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 4px rgba(229,0,0,0.55)) drop-shadow(0 0 10px rgba(229,0,0,0.25)) brightness(1);
+  }
+  40% {
+    opacity: 0.80;
+    filter: drop-shadow(0 0 2px rgba(229,0,0,0.30)) brightness(0.88);
+  }
+  55% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(229,0,0,0.80)) drop-shadow(0 0 22px rgba(229,0,0,0.45)) brightness(1.12);
+  }
+  70% {
+    opacity: 0.92;
+    filter: drop-shadow(0 0 5px rgba(229,0,0,0.60)) brightness(1.04);
+  }
+}
+
+@utility animate-hud-bloom {
+  animation: hud-bloom 3.2s ease-in-out infinite;
+}
+
+/* ════════════════════════════════════════════
+   FEUDAL FLICKER — heavy, irregular, low-freq
+   Simulates a primitive, failing neon sign.
+   Very different timing from defective-strobe.
+   ════════════════════════════════════════════ */
+@keyframes feudal-flicker {
+  /* Long stable on period */
+  0%, 7%  { opacity: 1;    filter: brightness(1) drop-shadow(0 0 10px #800000) drop-shadow(0 0 20px rgba(128,0,0,0.6)); }
+  /* First failure burst */
+  8%      { opacity: 0.05; filter: brightness(0.15); }
+  9%      { opacity: 1;    filter: brightness(1.3) drop-shadow(0 0 18px #E50000); }
+  10%     { opacity: 0.08; filter: brightness(0.1); }
+  11%     { opacity: 0.85; filter: brightness(0.9) drop-shadow(0 0 8px #800000); }
+  /* Long stable period */
+  12%, 34% { opacity: 0.92; filter: brightness(0.95) drop-shadow(0 0 10px #800000); }
+  /* Second failure — single flash */
+  35%     { opacity: 0.04; filter: brightness(0.08); }
+  36%     { opacity: 1;    filter: brightness(1.4) drop-shadow(0 0 24px #E50000); }
+  37%     { opacity: 0.92; filter: brightness(0.95) drop-shadow(0 0 10px #800000); }
+  /* Another long stable stretch */
+  38%, 62% { opacity: 0.9; filter: brightness(0.92) drop-shadow(0 0 8px #800000); }
+  /* Violent multi-flicker sequence */
+  63%     { opacity: 0.03; filter: brightness(0.05); }
+  64%     { opacity: 1;    filter: brightness(1.5) drop-shadow(0 0 30px #FF0000); }
+  65%     { opacity: 0.05; filter: brightness(0.08); }
+  66%     { opacity: 0.80; filter: brightness(0.85) drop-shadow(0 0 6px #800000); }
+  67%     { opacity: 0.04; filter: brightness(0.06); }
+  68%     { opacity: 1;    filter: brightness(1.2) drop-shadow(0 0 15px #E50000); }
+  /* Recovery — stable until next cycle */
+  69%, 100% { opacity: 0.92; filter: brightness(0.95) drop-shadow(0 0 10px #800000) drop-shadow(0 0 20px rgba(128,0,0,0.5)); }
+}
+
+@utility animate-feudal-flicker {
+  animation: feudal-flicker 7s steps(1, end) infinite;
+}
+
+/* ════════════════════════════════════════════
+   SECTION DIVIDER — ultra-thin 1px border line
+   with gradient vertical fade mask applied to
+   the surrounding section wrapper.
+   ════════════════════════════════════════════ */
+.section-divider {
+  position: relative;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(229, 0, 0, 0.18) 20%,
+    rgba(180, 180, 180, 0.12) 50%,
+    rgba(229, 0, 0, 0.18) 80%,
+    transparent 100%
+  );
+  overflow: visible;
+}
+
+.section-divider::before {
+  content: attr(data-label);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: #050505;
+  padding: 0 10px;
+  font-family: var(--font-space-mono);
+  font-size: 7px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(229, 0, 0, 0.35);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Vertical fade mask — applied to section wrappers */
+.section-fade-mask {
+  /* Mobile: very shallow fades (≤20px) */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    black 18px,
+    black calc(100% - 18px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    black 18px,
+    black calc(100% - 18px),
+    transparent 100%
+  );
+}
+
+@media (min-width: 768px) {
+  /* Desktop: deeper fades (≤50px) */
+  .section-fade-mask {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0px,
+      black 48px,
+      black calc(100% - 48px),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0px,
+      black 48px,
+      black calc(100% - 48px),
+      transparent 100%
+    );
+  }
+}

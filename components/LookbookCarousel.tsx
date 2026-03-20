@@ -4,13 +4,14 @@ import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 
+/* ─── Nomenclature: lb-01 through lb-06 ─── */
 const lookbookImages = [
-    'https://picsum.photos/seed/kaoz1/800/1200',
-    'https://picsum.photos/seed/kaoz2/800/1200',
-    'https://picsum.photos/seed/kaoz3/800/1200',
-    'https://picsum.photos/seed/kaoz4/800/1200',
-    'https://picsum.photos/seed/kaoz5/800/1200',
-    'https://picsum.photos/seed/kaoz6/800/1200',
+    '/carousel/lb-01.jpg',
+    '/carousel/lb-02.jpg',
+    '/carousel/lb-03.jpg',
+    '/carousel/lb-04.jpg',
+    '/carousel/lb-05.jpg',
+    '/carousel/lb-06.jpg',
 ];
 
 const ITEM_WIDTH = 220;   // px
@@ -19,7 +20,14 @@ const ITEM_GAP = 32;      // px (gap-8)
 /* ──────────────────────────────────────────
    Industrial Hanger Item
 ────────────────────────────────────────── */
-function HangerItem({ src, index, onClick }: { src: string; index: number; onClick: () => void }) {
+function HangerItem({ src, index, isActive, onActivate }: {
+    src: string;
+    index: number;
+    isActive: boolean;
+    onActivate: () => void;
+}) {
+    const label = `KZ-0${index + 1}`;
+
     return (
         <div
             className="group relative flex-shrink-0 flex flex-col items-center cursor-pointer"
@@ -27,7 +35,8 @@ function HangerItem({ src, index, onClick }: { src: string; index: number; onCli
                 width: `${ITEM_WIDTH}px`,
                 scrollSnapAlign: "center",
             }}
-            onClick={onClick}
+            onClick={onActivate}
+            onTouchStart={onActivate}
         >
             {/* ── Hanger hook wire ── */}
             <div className="relative flex flex-col items-center" style={{ height: "42px" }}>
@@ -49,54 +58,70 @@ function HangerItem({ src, index, onClick }: { src: string; index: number; onCli
                 className="relative overflow-hidden border border-brand-red/20 group-hover:border-brand-red/60 transition-all duration-500"
                 style={{ width: `${ITEM_WIDTH}px`, height: "300px" }}
             >
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                     src={src}
-                    alt={`Lookbook ${index + 1}`}
-                    fill
-                    className="object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-105 group-hover:scale-105 transition-all duration-700 ease-out"
-                    sizes="220px"
+                    alt={`Lookbook ${label}`}
+                    className="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-105"
+                    style={{
+                        filter: "invert(1) brightness(0.85)",
+                        mixBlendMode: "screen",
+                    }}
+                    onError={(e) => {
+                        // Graceful fallback to picsum if local file missing
+                        (e.currentTarget as HTMLImageElement).src = `https://picsum.photos/seed/kaoz${index + 1}/800/1200`;
+                    }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
+                {/* Corner indicators */}
                 <div className="absolute top-2 left-2 w-3 h-3 border-t border-l border-brand-red opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="absolute bottom-2 right-2 w-3 h-3 border-b border-r border-brand-red opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                {/* Index tag */}
                 <div className="absolute bottom-2 left-2 font-mono text-[8px] text-brand-red opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/70 px-1">
-                    IMG_0{index + 1}
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="bg-brand-red/80 px-3 py-1 font-body font-bold text-[10px] text-black uppercase tracking-[0.2em]">
-                        EXPANDIR
-                    </div>
+                    {label}
                 </div>
             </div>
 
-            {/* Size tag */}
-            <div className="mt-2 font-mono text-[8px] text-silver-dim/30 tracking-widest uppercase">
-                KZ-0{index + 1} // CROMO
+            {/* ── Hover/Tap label: [ VER DETALLES ] ── */}
+            <div
+                className="overflow-hidden transition-all duration-300 ease-out"
+                style={{
+                    maxHeight: isActive ? "28px" : "0px",
+                    opacity: isActive ? 1 : 0,
+                }}
+            >
+                <div className="mt-1.5 font-mono text-[9px] text-brand-red tracking-[0.25em] uppercase border border-brand-red/40 px-2 py-0.5 bg-black/80 whitespace-nowrap">
+                    [ VER DETALLES ]
+                </div>
+            </div>
+
+            {/* Size/ID tag — always visible */}
+            <div className="mt-1 font-mono text-[8px] text-silver-dim/30 tracking-widest uppercase">
+                {label} // CROMO
             </div>
         </div>
     );
 }
 
 /* ──────────────────────────────────────────
-   Tactical arrow button
+   Tactical arrow button — solid, always visible
 ────────────────────────────────────────── */
-function NavArrow({ dir, onClick, disabled }: { dir: "left" | "right"; onClick: () => void; disabled: boolean }) {
+function NavArrow({ dir, onClick }: { dir: "left" | "right"; onClick: () => void }) {
     return (
         <button
             onClick={onClick}
-            disabled={disabled}
             aria-label={dir === "left" ? "Anterior" : "Siguiente"}
             className={`
                 flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12
                 flex items-center justify-center
-                border border-brand-red/50 bg-black
+                border border-brand-red bg-black/90
                 font-mono text-brand-red text-lg font-bold
                 transition-all duration-200
-                hover:bg-brand-red hover:text-black hover:border-brand-red
+                hover:bg-brand-red hover:text-black
                 active:scale-95
-                disabled:opacity-20 disabled:cursor-not-allowed
-                z-10
+                z-20
             `}
         >
             {dir === "left" ? "<" : ">"}
@@ -105,6 +130,7 @@ function NavArrow({ dir, onClick, disabled }: { dir: "left" | "right"; onClick: 
 }
 
 export default function LookbookCarousel() {
+    const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [selectedImg, setSelectedImg] = useState<string | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -115,10 +141,14 @@ export default function LookbookCarousel() {
         el.scrollBy({ left: delta, behavior: "smooth" });
     }, []);
 
+    const handleActivate = (index: number) => {
+        setActiveIndex(prev => prev === index ? null : index);
+    };
+
     return (
         <section
             id="lookbook"
-            className="relative w-full z-20 bg-[#050505] pt-24 pb-24 overflow-hidden flex flex-col justify-center min-h-[100svh]"
+            className="relative w-full z-20 bg-[#050505] pt-24 pb-24 overflow-hidden flex flex-col justify-center min-h-[100svh] section-fade-mask"
         >
             {/* ── Vertical Japanese Marquee — far-left margin ── */}
             <div
@@ -163,14 +193,14 @@ export default function LookbookCarousel() {
 
             {/* Tech UI Decorators */}
             <div className="absolute top-8 left-12 font-mono text-[10px] text-brand-red opacity-50 hidden md:block">
-                {'//'} SYS.OP: RACK_DISPLAY <br />
-                LAT: 40.7128° N, LNG: 74.0060° W
+                {'// SYS.OP: RACK_DISPLAY'}<br />
+                {'LAT: 40.7128° N, LNG: 74.0060° W'}
             </div>
-            <div className="absolute top-8 right-8 text-silver/20 font-mono text-xs tracking-[0.2em] hidden sm:block">
+            <div className="absolute top-8 right-8 text-silver-dim/20 font-mono text-xs tracking-[0.2em] hidden sm:block">
                 --- COLECCION_CROMO ---
             </div>
 
-            {/* ── SECTION HEADING — Orbitron pure text ── */}
+            {/* ── SECTION HEADING ── */}
             <motion.div
                 className="w-full relative z-10 mx-auto px-4 sm:px-12 flex flex-col items-center"
                 initial={{ opacity: 0, y: 40 }}
@@ -221,8 +251,8 @@ export default function LookbookCarousel() {
                     {/* ── Row: arrow + scroll track + arrow ── */}
                     <div className="flex items-center gap-2 sm:gap-3 mt-0">
 
-                        {/* LEFT arrow */}
-                        <NavArrow dir="left" onClick={() => scrollBy("left")} disabled={false} />
+                        {/* LEFT arrow — solid, always visible */}
+                        <NavArrow dir="left" onClick={() => scrollBy("left")} />
 
                         {/* ── Scrollable item track with snap ── */}
                         <div
@@ -243,13 +273,14 @@ export default function LookbookCarousel() {
                                     key={src}
                                     src={src}
                                     index={index}
-                                    onClick={() => setSelectedImg(src)}
+                                    isActive={activeIndex === index}
+                                    onActivate={() => handleActivate(index)}
                                 />
                             ))}
                         </div>
 
-                        {/* RIGHT arrow */}
-                        <NavArrow dir="right" onClick={() => scrollBy("right")} disabled={false} />
+                        {/* RIGHT arrow — solid, always visible */}
+                        <NavArrow dir="right" onClick={() => scrollBy("right")} />
                     </div>
 
                     {/* Scroll hint */}
@@ -273,21 +304,16 @@ export default function LookbookCarousel() {
                         <div className="absolute top-6 right-6 font-mono text-brand-red text-sm flex items-center gap-2 border border-brand-red/30 px-3 py-1 hover:bg-brand-red/10 transition-colors">
                             <span>[CERRAR]</span>
                         </div>
-                        <div className="absolute bottom-6 left-6 font-mono text-brand-red/50 text-[10px] hidden md:block tracking-widest uppercase">
-                            // ENLACE DIRECTO ESTABLECIDO
-                        </div>
                         <motion.div
-                            layoutId={selectedImg}
                             className="relative w-full h-full max-w-3xl max-h-[88vh] border border-brand-red/20 shadow-[0_0_50px_rgba(229,0,0,0.15)]"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <Image
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
                                 src={selectedImg}
                                 alt="Lookbook Expanded"
-                                fill
-                                className="object-contain"
-                                sizes="100vw"
-                                priority
+                                className="w-full h-full object-contain"
+                                style={{ filter: "invert(1)", mixBlendMode: "screen" }}
                             />
                             <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-brand-red" />
                             <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-brand-red" />

@@ -134,7 +134,7 @@ function HudSignalBar() {
     const dashOffset = CIRCUMFERENCE * (1 - pct);
 
     return (
-        <div className="flex items-center gap-3 mb-1.5">
+        <div className="flex items-center gap-3 mb-1.5 animate-hud-bloom">
             <span className="font-body text-[8px] text-brand-red/60 tracking-widest">SIG</span>
 
             {/* ── Circular SVG dial ── */}
@@ -274,15 +274,124 @@ export default function Hero() {
                 <div className="absolute top-0 left-0 w-px h-5 bg-brand-red" />
                 <span className="absolute top-2.5 left-2.5 font-body text-[6px] text-brand-red tracking-widest hidden sm:block">38.4N // 28.7W</span>
             </div>
-            <div className="absolute top-4 right-4 z-50 pointer-events-none opacity-40 text-right">
+            <div className="absolute top-4 right-4 z-50 pointer-events-none opacity-40 text-right hidden sm:block">
                 <div className="absolute top-0 right-0 w-5 h-px bg-silver-dim" />
                 <div className="absolute top-0 right-0 w-px h-5 bg-silver-dim" />
-                <span className="absolute top-2.5 right-2.5 font-body text-[6px] text-silver-dim tracking-widest hidden sm:block">SYS.ID: KZ-2026</span>
+                <span className="absolute top-2.5 right-2.5 font-body text-[6px] text-silver-dim tracking-widest">SYS.ID: KZ-2026</span>
             </div>
             <div className="absolute bottom-6 right-4 z-50 pointer-events-none opacity-40 text-right hidden sm:block">
                 <div className="absolute bottom-0 right-0 w-5 h-px bg-brand-red" />
                 <div className="absolute bottom-0 right-0 w-px h-5 bg-brand-red" />
                 <span className="absolute bottom-2.5 right-2.5 font-body text-[6px] text-brand-red tracking-widest">クロモ // v.01</span>
+            </div>
+
+            {/* ════════════ SAFARI DISCO LOCATION HUD — TOP RIGHT ════════════ */}
+            <div
+                className="absolute z-50 pointer-events-none"
+                style={{
+                    top: "clamp(14px, 3vw, 28px)",
+                    right: "clamp(14px, 3vw, 28px)",
+                }}
+            >
+                <div
+                    style={{
+                        background: "rgba(5, 5, 5, 0.75)",
+                        border: "1px solid rgba(229, 0, 0, 0.7)",
+                        padding: "5px 9px 4px",
+                        backdropFilter: "blur(6px)",
+                    }}
+                >
+                    {/* Top hairline accent */}
+                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: "linear-gradient(to right, rgba(229,0,0,0.8), transparent)" }} />
+                    <div className="flex items-center gap-1.5">
+                        {/* Blinking red dot */}
+                        <span
+                            style={{
+                                display: "inline-block",
+                                width: "5px",
+                                height: "5px",
+                                borderRadius: "50%",
+                                background: "#E50000",
+                                boxShadow: "0 0 5px #E50000, 0 0 10px rgba(229,0,0,0.5)",
+                                flexShrink: 0,
+                                animation: "hud-bloom 1.6s ease-in-out infinite",
+                            }}
+                        />
+                        <p
+                            className="font-body"
+                            style={{
+                                fontSize: "clamp(6px, 1vw, 8px)",
+                                letterSpacing: "0.28em",
+                                textTransform: "uppercase",
+                                color: "rgba(229, 0, 0, 0.9)",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            // LOC_DATA: SAFARI DISCO //
+                        </p>
+                    </div>
+                    <p
+                        className="font-body"
+                        style={{
+                            fontSize: "6px",
+                            letterSpacing: "0.2em",
+                            textTransform: "uppercase",
+                            color: "rgba(229, 0, 0, 0.35)",
+                            marginTop: "2px",
+                        }}
+                    >
+                        SYS: GEOTRACK ACTIVO
+                    </p>
+                </div>
+            </div>
+
+            {/* ════════════ CHROME PARTNER LOGOS — BOTTOM RIGHT ════════════ */}
+            {/*
+              AGGRESSIVE DUAL-PASS BACKGROUND ISOLATION:
+              - White-bg logos (safaricromo.jpg): mix-blend-multiply
+              - Dark/transparent-bg PNGs: mix-blend-screen
+              Goal: remove boxes without altering the chrome colors.
+            */}
+            <div
+                className="absolute z-50 pointer-events-none flex items-center"
+                style={{
+                    bottom: "clamp(18px, 3vw, 32px)",
+                    right: "clamp(14px, 3vw, 28px)",
+                    gap: "clamp(10px, 1.5vw, 18px)",
+                }}
+            >
+                {([
+                    // WHITE bg → multiply to kill white bbox tracking without altering chrome colors
+                    { src: "/safaricromo.jpg",   alt: "Safari",    wrapBlend: "multiply" as const, imgBlend: "multiply" as const  },
+                    // DARK/transparent bg → screen kills the black bg
+                    { src: "/emecromo.png",      alt: "EME",       wrapBlend: "screen"   as const, imgBlend: "screen"  as const  },
+                    { src: "/skatecromo.png",    alt: "Skate",     wrapBlend: "screen"   as const, imgBlend: "screen"  as const  },
+                    { src: "/beathallcromo.png", alt: "Beat Hall", wrapBlend: "screen"   as const, imgBlend: "screen"  as const  },
+                ]).map(({ src, alt, wrapBlend, imgBlend }) => (
+                    <div
+                        key={src}
+                        style={{
+                            mixBlendMode: wrapBlend,
+                            background: "transparent",
+                            display: "flex",
+                            alignItems: "center",
+                        }}
+                    >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={src}
+                            alt={alt}
+                            style={{
+                                height: "clamp(26px, 3.5vw, 40px)",
+                                width: "auto",
+                                objectFit: "contain",
+                                display: "block",
+                                mixBlendMode: imgBlend,
+                                opacity: 0.92,
+                            }}
+                        />
+                    </div>
+                ))}
             </div>
 
             {/* ════════════ BASE BG — noise grain ════════════ */}

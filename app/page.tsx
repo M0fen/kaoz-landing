@@ -29,14 +29,32 @@ export default function Home() {
           <Hero />
         </ScrollFadeSection>
 
+        {/* ── Section Divider: Hero → Lookbook ── */}
+        <div
+          className="section-divider relative z-20 mx-0"
+          data-label="// CROMO LOOKBOOK //"
+        />
+
         <ScrollFadeSection>
           <LookbookCarousel />
         </ScrollFadeSection>
 
+        {/* ── Section Divider: Lookbook → Lineup ── */}
+        <div
+          className="section-divider relative z-20 mx-0"
+          data-label="// LINEUP KAOZ //"
+        />
+
         <ScrollFadeSection>
           <EventLineup />
         </ScrollFadeSection>
-        
+
+        {/* ── Section Divider: Lineup → CTA ── */}
+        <div
+          className="section-divider relative z-20 mx-0"
+          data-label="// ACCESO DIRECTO //"
+        />
+
         <TerminalCTA />
         <Footer />
       </div>
