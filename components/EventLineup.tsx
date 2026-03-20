@@ -13,28 +13,28 @@ const MAIN_ARTISTS = [
     {
         id: "1",
         title: "KAOZ_TRANSMISSION_01",
-        front: "/lineup_artist_01.png",
+        front: "/lineup_front_01.png",
         stats: "/lineup1stats.png",
         videoId: "rHidPbqdpJs",
     },
     {
         id: "2",
         title: "KAOZ_TRANSMISSION_02",
-        front: "/lineup_artist_02.jpg",
-        stats: "/lineup2stats.png",
+        front: "/lineup_front_02.png",
+        stats: "/lineup2stats.jpeg",
         videoId: "e5k5kUqSgVc",
     },
     {
         id: "3",
         title: "KAOZ_TRANSMISSION_03",
-        front: "/lineup_artist_03.jpg",
+        front: "/lineup_front_03.png",
         stats: "/lineup3stats.png",
         videoId: "h3Eu2Xb63VY",
     },
     {
         id: "4",
         title: "KAOZ_TRANSMISSION_04",
-        front: "/lineup_artist_04.jpg",
+        front: "/lineup_front_04.png",
         stats: "/lineup4stats.png",
         videoId: "lu4s7VT4FmY",
     },
@@ -55,18 +55,17 @@ export default function EventLineup() {
     return (
         <section
             id="lineup"
-            className="relative bg-[#050505] overflow-hidden flex flex-col items-center py-24 min-h-[100svh] section-fade-mask"
+            className="relative bg-[#0A0A0A] overflow-hidden flex flex-col items-center py-24 min-h-[100svh]"
             style={{ zIndex: 30 }}
         >
             {/* ── Background noise grain ── */}
-            <div className="absolute inset-0 z-0 bg-[#050505]">
+            <div className="absolute inset-0 z-0 bg-[#0A0A0A]">
                 <div
                     className="absolute inset-0 opacity-[0.12]"
                     style={{
                         backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"n\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.7\" numOctaves=\"3\" stitchTiles=\"stitch\"/%3E%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23n)\"/%3E%3C/svg%3E')",
                     }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/60 to-black pointer-events-none" />
             </div>
 
             {/* ── Feudal Neon Dragon — tamed ── */}
