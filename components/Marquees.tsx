@@ -36,7 +36,7 @@ export default function Marquees() {
                     ))}
                 </motion.div>
             </div>
-
+ {/* ── BOTTOM HORIZONTAL MARQUEE ── */}
             {/* ── BOTTOM HORIZONTAL MARQUEE ── */}
             <div className="fixed bottom-0 left-0 right-0 z-50 overflow-hidden pointer-events-none border-t border-silver/10 opacity-20 bg-black/30 h-5">
                 <motion.div
@@ -46,6 +46,8 @@ export default function Marquees() {
                     style={{ width: "200%" }}
                 >
                     {/* Duplicate to create seamless loop */}
+
+
                     <span className="pr-0">{BOTTOM_TEXT.repeat(8)}</span>
                     <span className="pr-0">{BOTTOM_TEXT.repeat(8)}</span>
                 </motion.div>

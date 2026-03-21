@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* ─────────────────────────────────────────────────────────
@@ -21,7 +21,7 @@ const MAIN_ARTISTS = [
         id: "2",
         title: "KAOZ_TRANSMISSION_02",
         front: "/lineup_front_02.png",
-        stats: "/lineup2stats.jpeg",
+        stats: "/lineup2stats.png",
         videoId: "e5k5kUqSgVc",
     },
     {
@@ -51,7 +51,54 @@ const DJ_DATA = [
 
 const STEP_LABELS = ["VER STATS →", "VER VIDEO →", "← VOLVER"];
 
+/* ──────────────────────────────────────────
+   LIGHTBOX MODAL — full-screen black overlay
+────────────────────────────────────────── */
+function Lightbox({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
+    // Close on Escape key
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, [onClose]);
+
+    return (
+        <div
+            className="fixed inset-0 z-[999] flex items-center justify-center"
+            style={{ background: "#000" }}
+            onClick={onClose}
+        >
+            {/* [ X ] close button */}
+            <button
+                onClick={onClose}
+                className="absolute top-4 right-4 font-mono text-brand-red border border-brand-red/60 bg-black/80 hover:bg-brand-red/10 transition-colors duration-200"
+                style={{ zIndex: 1000, padding: "4px 10px", fontSize: "11px", letterSpacing: "0.2em", lineHeight: 1.6 }}
+                aria-label="Close"
+            >
+                [ X ]
+            </button>
+            {/* Image — centered, uncropped, contained */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+                src={src}
+                alt={alt}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    maxWidth: "95vw",
+                    maxHeight: "92vh",
+                    objectFit: "contain",
+                    display: "block",
+                }}
+            />
+        </div>
+    );
+}
+
 export default function EventLineup() {
+    const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
+    const openLightbox = useCallback((src: string, alt: string) => setLightbox({ src, alt }), []);
+    const closeLightbox = useCallback(() => setLightbox(null), []);
+
     return (
         <section
             id="lineup"
@@ -162,7 +209,7 @@ export default function EventLineup() {
             >
                 {/* ── Main Artist Cards (3-state) ── */}
                 {MAIN_ARTISTS.map((item, index) => (
-                    <ArtistCard key={item.id} item={item} index={index} />
+                    <ArtistCard key={item.id} item={item} index={index} onOpenLightbox={openLightbox} />
                 ))}
 
                 {/* ── DJ Heading spanning full width ── */}
@@ -177,7 +224,7 @@ export default function EventLineup() {
                 {/* ── DJ Cards (static, 1 state) ─ safely protected from section fade mask ── */}
                 <div className="col-span-1 sm:col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 relative z-30 opacity-100">
                     {DJ_DATA.map((dj, i) => (
-                        <DJCard key={dj.id} dj={dj} index={i} />
+                        <DJCard key={dj.id} dj={dj} index={i} onOpenLightbox={openLightbox} />
                     ))}
                 </div>
             </div>
@@ -191,6 +238,9 @@ export default function EventLineup() {
                 <div className="absolute bottom-0 right-0 w-px h-5 bg-brand-red" />
                 <span className="absolute bottom-2.5 right-2.5 font-body text-[7px] text-brand-red tracking-widest">--- CORTE ---</span>
             </div>
+
+            {/* ── Lightbox modal ── */}
+            {lightbox && <Lightbox src={lightbox.src} alt={lightbox.alt} onClose={closeLightbox} />}
         </section>
     );
 }
@@ -199,8 +249,17 @@ export default function EventLineup() {
    MAIN ARTIST CARD — 3-state with dynamic aspect ratio
    step 0 / 1 → portrait (aspect 3/4), object-contain
    step 2      → widescreen (aspect 16/9), iframe
+   Click = advance state | Long-press / Ctrl+click on image = open lightbox
 ────────────────────────────────────────── */
-function ArtistCard({ item, index }: { item: typeof MAIN_ARTISTS[0]; index: number }) {
+function ArtistCard({
+    item,
+    index,
+    onOpenLightbox,
+}: {
+    item: typeof MAIN_ARTISTS[0];
+    index: number;
+    onOpenLightbox: (src: string, alt: string) => void;
+}) {
     const [step, setStep] = useState(0);
 
     const advance = () => setStep(s => (s + 1) % 3);
@@ -209,7 +268,7 @@ function ArtistCard({ item, index }: { item: typeof MAIN_ARTISTS[0]; index: numb
     const isVideo  = step === 2;
     const aspectStyle: React.CSSProperties = {
         aspectRatio: isVideo ? "16 / 9" : "3 / 4",
-        transition: "aspect-ratio 0s",   // aspect-ratio can't animate in CSS — we morph width instead
+        transition: "aspect-ratio 0s",
     };
 
     return (
@@ -218,12 +277,10 @@ function ArtistCard({ item, index }: { item: typeof MAIN_ARTISTS[0]; index: numb
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.6, delay: index * 0.1 }}
-            /* overflow-hidden so the border is clipped cleanly */
             className="relative w-full overflow-hidden cursor-pointer select-none transition-all duration-500"
             style={{
                 ...aspectStyle,
                 background: "rgba(5,5,5,0.80)",
-                // Wider when video is active — expand to fill two columns on lg when video
                 ...(isVideo ? { gridColumn: "span 2" } : {}),
             }}
             onClick={advance}
@@ -249,12 +306,13 @@ function ArtistCard({ item, index }: { item: typeof MAIN_ARTISTS[0]; index: numb
                         <img
                             src={item.front}
                             alt={item.title}
-                            className="absolute inset-0 w-full h-full object-contain opacity-80 hover:opacity-95 transition-all duration-500"
+                            className="absolute inset-0 w-full h-full object-contain"
+                            style={{ opacity: 1, objectPosition: "top" }}
+                            onDoubleClick={(e) => { e.stopPropagation(); onOpenLightbox(item.front, item.title); }}
                             onError={(e) => {
                                 (e.currentTarget as HTMLImageElement).src = `https://picsum.photos/seed/kzev${index}/480/640`;
                             }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                         {/* Footer bar */}
                         <div className="absolute bottom-0 left-0 right-0 z-10 px-4 py-2 border-t border-brand-red/20 bg-brand-red/5 backdrop-blur-sm flex justify-between items-center">
                             <span className="font-mono text-[9px] text-silver-dim tracking-widest uppercase">{item.title}</span>
@@ -284,6 +342,7 @@ function ArtistCard({ item, index }: { item: typeof MAIN_ARTISTS[0]; index: numb
                             src={item.stats}
                             alt={`${item.title} stats`}
                             className="absolute inset-0 w-full h-full object-contain"
+                            onDoubleClick={(e) => { e.stopPropagation(); onOpenLightbox(item.stats, `${item.title} stats`); }}
                             onError={(e) => {
                                 (e.currentTarget as HTMLImageElement).src = `https://picsum.photos/seed/kzst${index}/480/640`;
                             }}
@@ -346,32 +405,41 @@ function ArtistCard({ item, index }: { item: typeof MAIN_ARTISTS[0]; index: numb
 }
 
 /* ──────────────────────────────────────────
-   DJ CARD — static (1 state, no interaction)
+   DJ CARD — click to open lightbox
 ────────────────────────────────────────── */
-function DJCard({ dj, index }: { dj: typeof DJ_DATA[0]; index: number }) {
+function DJCard({
+    dj,
+    index,
+    onOpenLightbox,
+}: {
+    dj: typeof DJ_DATA[0];
+    index: number;
+    onOpenLightbox: (src: string, alt: string) => void;
+}) {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-40px" }}
             transition={{ duration: 0.5, delay: index * 0.12 }}
-            className="relative w-full overflow-hidden"
+            className="relative w-full overflow-hidden cursor-pointer"
             style={{
                 border: "1px solid rgba(229,0,0,0.2)",
                 background: "rgba(5,5,5,0.80)",
             }}
+            onClick={() => onOpenLightbox(dj.src, dj.alt)}
         >
             {/* Corner accents */}
             <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-brand-red/60 z-10" />
             <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-brand-red/60 z-10" />
 
-            {/* DJ Info image — natural height, no cropping */}
+            {/* DJ Info image — natural height, no cropping, original colors */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
                 src={dj.src}
                 alt={dj.alt}
                 className="w-full h-auto block"
-                style={{ display: "block" }}
+                style={{ display: "block", opacity: 1 }}
                 onError={(e) => {
                     const el = e.currentTarget as HTMLImageElement;
                     el.style.display = "none";
@@ -380,16 +448,13 @@ function DJCard({ dj, index }: { dj: typeof DJ_DATA[0]; index: number }) {
                 }}
             />
 
-            {/* Bottom technical label */}
-            <div
-                className="absolute bottom-0 left-0 right-0 px-3 py-1.5 flex justify-between items-center"
-                style={{ background: "linear-gradient(to top, rgba(5,5,5,0.95), transparent)" }}
-            >
+            {/* Slim bottom label — no heavy gradient that dims the image */}
+            <div className="absolute bottom-0 left-0 right-0 px-3 py-1 flex justify-between items-center bg-black/60">
                 <span className="font-mono text-[8px] text-brand-red/70 tracking-[0.3em] uppercase">
                     DJ_0{index + 1}
                 </span>
-                <span className="font-mono text-[7px] text-silver-dim/30 tracking-widest">
-                    // KZ-2026
+                <span className="font-mono text-[7px] text-silver-dim/40 tracking-widest">
+                    [ VER ↗ ]
                 </span>
             </div>
         </motion.div>

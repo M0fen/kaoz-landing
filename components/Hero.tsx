@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import Countdown from "./Countdown";
+import CromoRunner from "./CromoRunner";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -96,10 +97,16 @@ function CromoLettering({ src, className, style }: { src: string; className?: st
 }
 
 /* ──────────────────────────────────────────
-   SVG Circular Transmission Dial — 71% on mount
+   SVG Circular Transmission Dial — Option C
+   Constantly fluctuates 95–99% with hacker glitch scramble
 ────────────────────────────────────────── */
+const DIGIT_CHARS = "0123456789";
+
 function HudSignalBar() {
-    const [count, setCount] = useState(0);
+    // True value fluctuates between 95–99
+    const [value, setValue] = useState(97);
+    // Displayed string (may be scrambled during glitch)
+    const [display, setDisplay] = useState("97");
     const [glitch, setGlitch] = useState(false);
 
     const SIZE = 56;
@@ -107,30 +114,46 @@ function HudSignalBar() {
     const R = (SIZE - STROKE) / 2;
     const CIRCUMFERENCE = 2 * Math.PI * R;
 
+    // Fluctuation loop: every 400–900 ms pick a new value and do a glitch scramble
     useEffect(() => {
-        const total = 71;
-        const duration = 1000; // ms
-        const start = performance.now();
-        let rafId: number;
-        const tick = (now: number) => {
-            const elapsed = now - start;
-            const progress = Math.min(elapsed / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            const current = Math.round(eased * total);
-            setCount(current);
-            if (progress < 1) {
-                rafId = requestAnimationFrame(tick);
-            } else {
-                setCount(total);
-                setGlitch(true);
-                setTimeout(() => setGlitch(false), 250);
-            }
+        let timeoutId: ReturnType<typeof setTimeout>;
+
+        const cycle = () => {
+            const next = Math.floor(Math.random() * 5) + 95; // 95–99
+            const nextStr = String(next);
+
+            // Scramble the display for a few frames before settling
+            setGlitch(true);
+            let scrambleCount = 0;
+            const maxScrambles = 4 + Math.floor(Math.random() * 4); // 4–8 frames
+            let rafId: number;
+
+            const scrambleStep = () => {
+                scrambleCount++;
+                if (scrambleCount < maxScrambles) {
+                    // Show a random 2-digit number as the scramble
+                    const fake = `${DIGIT_CHARS[Math.floor(Math.random() * 10)]}${DIGIT_CHARS[Math.floor(Math.random() * 10)]}`;
+                    setDisplay(fake);
+                    rafId = requestAnimationFrame(scrambleStep);
+                } else {
+                    // Settle on real value
+                    setDisplay(nextStr);
+                    setValue(next);
+                    setGlitch(false);
+                }
+            };
+            rafId = requestAnimationFrame(scrambleStep);
+
+            // Schedule next cycle
+            timeoutId = setTimeout(cycle, 400 + Math.random() * 500);
+            return () => { cancelAnimationFrame(rafId); };
         };
-        setTimeout(() => { rafId = requestAnimationFrame(tick); }, 300);
-        return () => cancelAnimationFrame(rafId);
+
+        timeoutId = setTimeout(cycle, 600);
+        return () => clearTimeout(timeoutId);
     }, []);
 
-    const pct = count / 71;
+    const pct = value / 100;
     const dashOffset = CIRCUMFERENCE * (1 - pct);
 
     return (
@@ -168,7 +191,7 @@ function HudSignalBar() {
                             animation: "spin 12s linear infinite",
                         }}
                     />
-                    {/* Progress arc */}
+                    {/* Progress arc — tracks live value */}
                     <circle
                         cx={SIZE / 2}
                         cy={SIZE / 2}
@@ -180,8 +203,8 @@ function HudSignalBar() {
                         strokeDasharray={`${CIRCUMFERENCE}`}
                         strokeDashoffset={dashOffset}
                         style={{
-                            transition: "stroke-dashoffset 0.04s linear",
-                            filter: count > 0 ? "drop-shadow(0 0 3px rgba(229,0,0,0.7))" : "none",
+                            transition: "stroke-dashoffset 0.1s linear",
+                            filter: "drop-shadow(0 0 3px rgba(229,0,0,0.7))",
                         }}
                     />
                 </svg>
@@ -192,12 +215,12 @@ function HudSignalBar() {
                     style={{
                         gap: "0px",
                         color: glitch ? "#E50000" : "rgba(255,255,255,0.85)",
-                        textShadow: glitch ? "1px 0 0 #00FFFF" : "none",
+                        textShadow: glitch ? "1px 0 0 #00FFFF, -1px 0 0 rgba(229,0,0,0.8)" : "none",
                         transition: "color 0.05s",
                     }}
                 >
                     <span className="font-body tabular-nums" style={{ fontSize: "12px", lineHeight: 1, fontWeight: 700 }}>
-                        {count}
+                        {display}
                     </span>
                     <span className="font-body" style={{ fontSize: "7px", lineHeight: 1.2, color: "rgba(229,0,0,0.7)" }}>
                         %
@@ -231,6 +254,22 @@ export default function Hero() {
     const containerRef = useRef<HTMLElement>(null);
     const isCoarsePointer = useIsCoarsePointer();
 
+    // ── Easter Egg: CromoRunner ──
+    const [gameOpen, setGameOpen] = useState(false);
+    const eggClicks = useRef(0);
+    const eggTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const handleCountdownClick = useCallback(() => {
+        eggClicks.current++;
+        if (eggClicks.current >= 3) {
+            eggClicks.current = 0;
+            if (eggTimer.current) clearTimeout(eggTimer.current);
+            setGameOpen(true);
+            return;
+        }
+        if (eggTimer.current) clearTimeout(eggTimer.current);
+        eggTimer.current = setTimeout(() => { eggClicks.current = 0; }, 1500);
+    }, []);
+
     const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
     const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
 
@@ -253,6 +292,7 @@ export default function Hero() {
     const handleMouseLeave = () => { mouseX.set(0); mouseY.set(0); };
 
     return (
+        <>
         <section
             ref={containerRef}
             id="inicio"
@@ -510,8 +550,10 @@ export default function Hero() {
                     {/* Progress / signal bar — animated on mount */}
                     <HudSignalBar />
 
-                    {/* Countdown */}
-                    <Countdown />
+                    {/* Countdown — 3 clicks = Easter Egg */}
+                    <div onClick={handleCountdownClick} className="cursor-pointer">
+                        <Countdown />
+                    </div>
 
                     {/* Secondary HUD line */}
                     <p className="font-body text-[7px] tracking-[0.3em] text-silver-dim/40 mt-1 uppercase hidden sm:block">
@@ -565,6 +607,20 @@ export default function Hero() {
                     backgroundSize: "100% 3px"
                 }}
             />
+
+            {/* ════════════ BOTTOM VOID FADE ════════════ */}
+            {/* Blends Hero into the section below — no hard cut */}
+            <div
+                className="pointer-events-none absolute bottom-0 left-0 right-0 z-[40]"
+                style={{
+                    height: "22%",
+                    background: "linear-gradient(to bottom, transparent 0%, rgba(5,5,5,0.55) 50%, #050505 100%)",
+                }}
+            />
         </section>
+
+        {/* ── CromoRunner Easter Egg Modal ── */}
+        {gameOpen && <CromoRunner onClose={() => setGameOpen(false)} />}
+    </>
     );
 }

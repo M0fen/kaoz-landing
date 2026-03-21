@@ -8,6 +8,9 @@ export default function FloatingQuiz() {
     const [isOpen, setIsOpen] = useState(false);
 
     // Form State
+
+ 
+
     const [phase, setPhase] = useState<"input" | "quiz" | "finished">("input");
     const [formData, setFormData] = useState({ name: "", whatsapp: "", ig: "" });
     const [error, setError] = useState("");

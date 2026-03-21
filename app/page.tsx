@@ -45,9 +45,7 @@ export default function Home() {
           data-label="// LINEUP KAOZ //"
         />
 
-        <ScrollFadeSection>
-          <EventLineup />
-        </ScrollFadeSection>
+        <EventLineup />
 
         {/* ── Section Divider: Lineup → CTA ── */}
         <div

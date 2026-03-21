@@ -699,6 +699,57 @@ h6 {
 }
 
 /* ════════════════════════════════════════════
+   CROMO PULSE — chrome liquid player breathing
+   ════════════════════════════════════════════ */
+@keyframes cromo-pulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(229,0,0,0.4), 0 0 20px rgba(229,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.6);
+    transform: scaleY(1);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(229,0,0,0.6), 0 0 30px rgba(229,0,0,0.25), inset 0 1px 2px rgba(255,255,255,0.6);
+    transform: scaleY(1.03);
+  }
+}
+
+/* ════════════════════════════════════════════
+   CROMO CHROMATIC — chromatic aberration glitch
+   Triggered on jump & collision for 200ms
+   ════════════════════════════════════════════ */
+@keyframes cromo-chromatic {
+  0%   { filter: none; }
+  20%  { filter: drop-shadow(-2px 0 0 rgba(255,0,0,0.7)) drop-shadow(2px 0 0 rgba(0,100,255,0.7)); }
+  40%  { filter: drop-shadow(1px 0 0 rgba(255,0,0,0.5)) drop-shadow(-1px 0 0 rgba(0,100,255,0.5)); }
+  60%  { filter: drop-shadow(-3px 0 0 rgba(255,0,0,0.6)) drop-shadow(3px 0 0 rgba(0,100,255,0.6)); transform: translateX(1px); }
+  80%  { filter: drop-shadow(1px 0 0 rgba(255,0,0,0.3)) drop-shadow(-1px 0 0 rgba(0,100,255,0.3)); transform: translateX(-1px); }
+  100% { filter: none; transform: translateX(0); }
+}
+
+/* ════════════════════════════════════════════
+   KAOZ TICKER — horizontal marquee for code divider
+   ════════════════════════════════════════════ */
+@keyframes kaoz-ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ════════════════════════════════════════════
+   KAOZ FLICKER — step-end opacity blink
+   Simulates a terminal character drop/glitch
+   ════════════════════════════════════════════ */
+@keyframes kaoz-flicker {
+  0%,  100% { opacity: 1;    }
+  10%        { opacity: 0.6;  }
+  11%        { opacity: 1;    }
+  30%        { opacity: 0.35; }
+  31%        { opacity: 1;    }
+  65%        { opacity: 0.7;  }
+  66%        { opacity: 1;    }
+  80%        { opacity: 0.45; }
+  81%        { opacity: 1;    }
+}
+
+/* ════════════════════════════════════════════
    SECTION DIVIDER — ultra-thin 1px border line
    with gradient vertical fade mask applied to
    the surrounding section wrapper.

@@ -42,7 +42,6 @@ function useScramble(text: string, frames = 14) {
    Main CTA Section
 ────────────────────────────────────────── */
 export default function TerminalCTA() {
-    const lead = useScramble("// Aquí puedes adquirir tus entradas //", 12);
     const btn  = useScramble("ADQUIRIR ENTRADAS", 18);
 
     return (
@@ -50,6 +49,35 @@ export default function TerminalCTA() {
             className="relative w-full z-30 flex flex-col items-center justify-center py-10 sm:py-14"
             style={{ background: "rgba(5,5,5,0.97)" }}
         >
+            {/* ── Code Divider — terminal scramble ticker ── */}
+            <div className="absolute top-0 left-0 right-0 flex flex-col items-stretch pointer-events-none" style={{ zIndex: 5 }}>
+                {/* 1px separator line */}
+                <div style={{ height: "1px", background: "linear-gradient(to right, transparent, rgba(229,0,0,0.25) 20%, rgba(229,0,0,0.12) 50%, rgba(229,0,0,0.25) 80%, transparent)" }} />
+                {/* Repeating ticker text */}
+                <div
+                    className="overflow-hidden whitespace-nowrap"
+                    style={{
+                        padding: "3px 0",
+                        borderBottom: "1px solid rgba(229,0,0,0.08)",
+                        background: "rgba(5,5,5,0.0)",
+                    }}
+                >
+                    <span
+                        className="font-mono inline-block"
+                        style={{
+                            fontSize: "7px",
+                            letterSpacing: "0.3em",
+                            textTransform: "uppercase",
+                            color: "rgba(229,0,0,0.18)",
+                            animation: "kaoz-ticker 18s linear infinite, kaoz-flicker 3.5s step-end infinite",
+                            willChange: "transform",
+                        }}
+                    >
+                        {Array(6).fill("// KAOZ_CROMO_COLLECTION // DECRYPTING_LINEUP... // SYS_PASS: ██████ // KZ-2026 // ").join("")}
+                    </span>
+                </div>
+            </div>
+
             {/* ── Top hairline ── */}
             <div
                 className="absolute top-0 left-0 right-0 h-px"
@@ -83,36 +111,10 @@ export default function TerminalCTA() {
                         className="font-mono uppercase tracking-[0.35em]"
                         style={{ fontSize: "clamp(6px, 1.6vw, 8px)", color: "rgba(229,0,0,0.45)" }}
                     >
-                        // SYS_CTA_ACTIVE // CROMO 2026 //
+                        // SYS_CTA_ACTIVE // Bienvenidos a Cromo //
                     </span>
                 </div>
 
-                {/* ── Lead scramble text ── */}
-                <a
-                    href={WA_LINK}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group w-full text-center cursor-pointer"
-                    onMouseEnter={lead.scramble}
-                    onTouchStart={lead.scramble}
-                    aria-label="Adquirir tus entradas"
-                >
-                    <span
-                        className="font-mono tracking-[0.18em] uppercase transition-colors duration-200 group-hover:text-brand-red"
-                        style={{
-                            fontSize: "clamp(0.6rem, 2vw, 0.78rem)",
-                            color: "rgba(229,0,0,0.5)",
-                        }}
-                    >
-                        {lead.display}
-                    </span>
-                </a>
-
-                {/* ── Thin red separator ── */}
-                <div
-                    className="w-full h-px"
-                    style={{ background: "linear-gradient(to right, transparent, rgba(229,0,0,0.3), transparent)" }}
-                />
 
                 {/* ── ADQUIRIR ENTRADAS button ── */}
                 <a
