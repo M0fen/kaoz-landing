@@ -204,8 +204,8 @@ export default function EventLineup() {
                 On small screens: 1 col; md: 2 cols; lg: 3 cols
             ════════════════════════════════════════════════ */}
             <div
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 w-full max-w-7xl mx-auto px-6 sm:px-12"
-                style={{ position: "relative", zIndex: 20 }}
+                className="grid gap-4 sm:gap-6 lg:gap-8 w-full max-w-7xl mx-auto px-6 sm:px-12"
+                style={{ position: "relative", zIndex: 20, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
             >
                 {/* ── Main Artist Cards (3-state) ── */}
                 {MAIN_ARTISTS.map((item, index) => (
@@ -222,7 +222,10 @@ export default function EventLineup() {
                 </div>
 
                 {/* ── DJ Cards (static, 1 state) ─ safely protected from section fade mask ── */}
-                <div className="col-span-1 sm:col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 relative z-30 opacity-100">
+                <div 
+                    className="col-span-1 sm:col-span-2 lg:col-span-3 grid gap-4 sm:gap-6 lg:gap-8 relative z-30 opacity-100"
+                    style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
+                >
                     {DJ_DATA.map((dj, i) => (
                         <DJCard key={dj.id} dj={dj} index={i} onOpenLightbox={openLightbox} />
                     ))}

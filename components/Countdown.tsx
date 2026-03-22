@@ -64,7 +64,7 @@ export default function Countdown() {
                 animate={controls}
                 className="inline-block font-body font-bold tracking-widest leading-none"
                 style={{
-                    fontSize: "clamp(1.4rem, 3.5vw, 2.4rem)",
+                    fontSize: "clamp(2rem, 8vw, 5rem)",
                     color: "#E50000",
                     textShadow: "0 0 18px rgba(229,0,0,0.6), 0 0 40px rgba(229,0,0,0.2)"
                 }}

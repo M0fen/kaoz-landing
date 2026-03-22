@@ -3,7 +3,7 @@ import Hero from "@/components/Hero";
 import LookbookCarousel from "@/components/LookbookCarousel";
 import EventLineup from "@/components/EventLineup";
 import TerminalCTA from "@/components/TerminalCTA";
-import FloatingQuiz from "@/components/FloatingQuiz";
+
 import Footer from "@/components/Footer";
 import Marquees from "@/components/Marquees";
 import GlitchTransition from "@/components/GlitchTransition";
@@ -58,7 +58,7 @@ export default function Home() {
       </div>
 
       {/* Persistent Overlay Elements */}
-      <FloatingQuiz />
+
       <GlitchTransition />
 
       {/* ─── Tech-UI Microdetails ───────────────────────────────────

@@ -34,7 +34,7 @@ function useTerminalScramble(text: string, trigger: any) {
 
 // Fixed external image paths
 const MAIN_FALLBACK = "/portadagaleria.jpg";
-const GALLERY_MODULES = [
+const KAOZ_MEDIA = [
     "/galeria1.jpeg",
     "/galeria2.jpeg",
     "/galeria3.jpg",
@@ -44,7 +44,12 @@ const GALLERY_MODULES = [
     "/galeria7.jpg",
     "/galeria9.jpg",
     "/galeria10.jpg",
+    "/portadagaleria.jpg",
+    "/video_promo.mp4",
 ];
+
+const IMAGES = KAOZ_MEDIA.filter((file) => /\.(jpg|jpeg|png|webp)$/i.test(file));
+const VIDEOS = KAOZ_MEDIA.filter((file) => /\.(mp4|mov|webm)$/i.test(file));
 
 // Fallback image generator to ensure aspect ratios aren't broken if assets are missing
 const extractFilename = (path: string) => path.split("/").pop() || "asset";
@@ -52,17 +57,40 @@ const getFallback = (index: number) => `https://picsum.photos/seed/kzgal${index}
 const getMainFallback = () => `https://picsum.photos/seed/kz_portada/1200/800`;
 
 export default function LookbookCarousel() {
-    const [activeImg, setActiveImg] = useState<string>(MAIN_FALLBACK);
+    const [activeTab, setActiveTab] = useState<"IMAGENES" | "VIDEOS">("IMAGENES");
+    const currentMediaArray = activeTab === "IMAGENES" ? IMAGES : VIDEOS;
+    
+    const [activeImg, setActiveImg] = useState<string>(currentMediaArray.length > 0 ? currentMediaArray[0] : MAIN_FALLBACK);
     const [scrambleTrigger, setScrambleTrigger] = useState(0);
+    const [titleTrigger, setTitleTrigger] = useState(0);
+
+    const handleTabSwitch = (tab: "IMAGENES" | "VIDEOS") => {
+        if (activeTab === tab) return;
+        setActiveTab(tab);
+        setTitleTrigger((t) => t + 1); // Trigger scramble only on tab switch
+        const newArray = tab === "IMAGENES" ? IMAGES : VIDEOS;
+        setActiveImg(newArray.length > 0 ? newArray[0] : MAIN_FALLBACK);
+        setScrambleTrigger((t) => t + 1);
+    };
 
     const handleModuleSelect = (src: string) => {
         if (activeImg === src) return;
         setActiveImg(src);
         setScrambleTrigger((t) => t + 1);
+
+        if (typeof window !== "undefined" && window.innerWidth < 768) {
+            const mainViewport = document.getElementById("galeria-viewport");
+            if (mainViewport) {
+                const y = mainViewport.getBoundingClientRect().top + window.scrollY - 80;
+                window.scrollTo({ top: y, behavior: "smooth" });
+            }
+        }
     };
 
     const sysStatus = useTerminalScramble("// SYS.STATUS: ONLINE", scrambleTrigger);
     const activeDataTag = useTerminalScramble(`[ ACTIVE_DATA_BLOCK: ${extractFilename(activeImg)} ]`, scrambleTrigger);
+
+    const glitchedTitle = useTerminalScramble("GALERÍA DEL KAOZ", titleTrigger);
 
     return (
         <section
@@ -98,10 +126,10 @@ export default function LookbookCarousel() {
                         letterSpacing: "0.15em",
                     }}
                 >
-                    GALERÍA DEL KAOZ
+                    {glitchedTitle}
                 </h2>
                 <p className="text-[10px] font-mono text-brand-red/60 tracking-[0.3em] uppercase max-w-2xl text-center">
-                    // ACCESO A TERMINAL VISUAL // {GALLERY_MODULES.length} MODULOS DE DATA //
+                    // ACCESO A TERMINAL VISUAL // {KAOZ_MEDIA.length} MODULOS DE DATA //
                 </p>
             </motion.div>
 
@@ -109,7 +137,7 @@ export default function LookbookCarousel() {
             <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12 z-10 flex flex-col lg:flex-row gap-6">
                 
                 {/* ── 1. MAIN VIEWPORT (LEFT) ── */}
-                <div className="w-full lg:w-[65%] flex flex-col gap-2">
+                <div id="galeria-viewport" className="w-full lg:w-[65%] flex flex-col gap-2">
                     {/* Viewport Header */}
                     <div className="flex justify-between items-end border-b border-brand-red/30 pb-2 px-1">
                         <span className="font-mono text-[10px] text-brand-red tracking-widest uppercase">
@@ -137,19 +165,36 @@ export default function LookbookCarousel() {
 
                         {/* Image Implementation — object-contain ensures dynamic aspect ratio without clipping */}
                         <AnimatePresence mode="wait">
-                            <motion.img
-                                key={activeImg}
-                                src={activeImg}
-                                alt={`Main Data Block ${extractFilename(activeImg)}`}
-                                initial={{ opacity: 0, scale: 1.05, filter: "brightness(2) contrast(1.5) hue-rotate(90deg)" }}
-                                animate={{ opacity: 1, scale: 1, filter: "brightness(1) contrast(1.1) hue-rotate(0deg)" }}
-                                exit={{ opacity: 0, scale: 0.95, filter: "brightness(0) contrast(2)" }}
-                                transition={{ duration: 0.4, ease: "easeOut" }}
-                                className="absolute inset-0 w-full h-full object-contain"
-                                onError={(e) => {
-                                    (e.currentTarget as HTMLImageElement).src = activeImg === MAIN_FALLBACK ? getMainFallback() : getFallback(Math.floor(Math.random() * 9));
-                                }}
-                            />
+                            {activeTab === "IMAGENES" ? (
+                                <motion.img
+                                    key={activeImg}
+                                    src={activeImg}
+                                    alt={`Main Data Block ${extractFilename(activeImg)}`}
+                                    initial={{ opacity: 0, scale: 1.05, filter: "brightness(2) contrast(1.5) hue-rotate(90deg)" }}
+                                    animate={{ opacity: 1, scale: 1, filter: "brightness(1) contrast(1.1) hue-rotate(0deg)" }}
+                                    exit={{ opacity: 0, scale: 0.95, filter: "brightness(0) contrast(2)" }}
+                                    transition={{ duration: 0.4, ease: "easeOut" }}
+                                    className="absolute inset-0 w-full h-full object-contain"
+                                    onError={(e) => {
+                                        (e.currentTarget as HTMLImageElement).src = activeImg === MAIN_FALLBACK ? getMainFallback() : getFallback(Math.floor(Math.random() * 9));
+                                    }}
+                                />
+                            ) : (
+                                <motion.video
+                                    key={activeImg}
+                                    src={activeImg}
+                                    initial={{ opacity: 0, scale: 1.05, filter: "brightness(2) contrast(1.5) hue-rotate(90deg)" }}
+                                    animate={{ opacity: 1, scale: 1, filter: "brightness(1) contrast(1.1) hue-rotate(0deg)" }}
+                                    exit={{ opacity: 0, scale: 0.95, filter: "brightness(0) contrast(2)" }}
+                                    transition={{ duration: 0.4, ease: "easeOut" }}
+                                    className="absolute inset-0 w-full h-full object-contain"
+                                    muted
+                                    loop
+                                    autoPlay
+                                    playsInline
+                                    preload="metadata"
+                                />
+                            )}
                         </AnimatePresence>
 
                         {/* UI Borders Flickering overlay */}
@@ -174,16 +219,30 @@ export default function LookbookCarousel() {
                 {/* ── 2. DATA MODULES GRID (RIGHT) ── */}
                 <div className="w-full lg:w-[35%] flex flex-col gap-2 mt-6 lg:mt-0">
                     
-                    {/* Grid Header */}
+                    {/* Grid Header & Tabs */}
                     <div className="flex justify-between items-end border-b border-brand-red/30 pb-2 px-1">
-                        <span className="font-mono text-[10px] text-brand-red tracking-widest uppercase">
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => handleTabSwitch("IMAGENES")}
+                                className={`font-mono text-[10px] tracking-widest uppercase transition-colors flex items-center min-h-[44px] ${activeTab === "IMAGENES" ? "text-brand-red font-bold" : "text-brand-red/40 hover:text-brand-red/80"}`}
+                            >
+                                [ IMAGENES ]
+                            </button>
+                            <button
+                                onClick={() => handleTabSwitch("VIDEOS")}
+                                className={`font-mono text-[10px] tracking-widest uppercase transition-colors flex items-center min-h-[44px] ${activeTab === "VIDEOS" ? "text-brand-red font-bold" : "text-brand-red/40 hover:text-brand-red/80"}`}
+                            >
+                                [ VIDEOS ]
+                            </button>
+                        </div>
+                        <span className="font-mono text-[10px] text-brand-red/40 tracking-widest uppercase hidden sm:block flex items-center min-h-[44px]">
                             // 09.MODULOS_DE_EXTRACCION
                         </span>
                     </div>
 
                     {/* The 3x3 Grid (Responsive) */}
                     <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full">
-                        {GALLERY_MODULES.map((src, idx) => {
+                        {currentMediaArray.map((src, idx) => {
                             const isSelected = activeImg === src;
                             const filename = extractFilename(src);
 
@@ -197,17 +256,32 @@ export default function LookbookCarousel() {
                                             : "border border-brand-red/20 hover:border-brand-red/80 bg-[#080808] hover:bg-brand-red/5"
                                     }`}
                                 >
-                                    {/* Image Preview - object-cover to fit grid cells perfectly */}
-                                    <img
-                                        src={src}
-                                        alt={`Module ${filename}`}
-                                        className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out ${
-                                            isSelected ? "opacity-100 mix-blend-normal" : "opacity-60 mix-blend-luminosity hover:opacity-100 hover:mix-blend-normal hover:scale-110"
-                                        }`}
-                                        onError={(e) => {
-                                            (e.currentTarget as HTMLImageElement).src = getFallback(idx + 1);
-                                        }}
-                                    />
+                                    {/* Media Preview - object-cover to fit grid cells perfectly */}
+                                    {activeTab === "IMAGENES" ? (
+                                        <img
+                                            src={src}
+                                            alt={`Module ${filename}`}
+                                            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out ${
+                                                isSelected ? "opacity-100 mix-blend-normal" : "opacity-60 mix-blend-luminosity hover:opacity-100 hover:mix-blend-normal hover:scale-110"
+                                            }`}
+                                            onError={(e) => {
+                                                (e.currentTarget as HTMLImageElement).src = getFallback(idx + 1);
+                                            }}
+                                        />
+                                    ) : (
+                                        <video
+                                            src={src}
+                                            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out ${
+                                                isSelected ? "opacity-100 mix-blend-normal" : "opacity-60 mix-blend-luminosity hover:opacity-100 hover:mix-blend-normal hover:scale-110"
+                                            }`}
+                                            muted
+                                            loop
+                                            playsInline
+                                            preload="metadata"
+                                            onMouseEnter={(e) => (e.target as HTMLVideoElement).play()}
+                                            onMouseLeave={(e) => (e.target as HTMLVideoElement).pause()}
+                                        />
+                                    )}
 
                                     {/* Encoded Metadata Superposition Overlay */}
                                     <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-1">

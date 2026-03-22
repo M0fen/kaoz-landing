@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import * as Tone from "tone";
 
 /* ══════════════════════════════════════════════════════
@@ -87,22 +87,13 @@ function ChromeSkull() {
                     <stop offset="82%" stopColor="#B0B0B0" />
                     <stop offset="100%" stopColor="#787878" />
                 </linearGradient>
-                {/* Eye glow filter */}
-                <filter id="crEyeGlow" x="-80%" y="-80%" width="260%" height="260%">
-                    <feGaussianBlur stdDeviation="2" result="b" />
-                    <feMerge><feMergeNode in="b" /><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-                </filter>
-                {/* Specular highlight */}
-                <radialGradient id="crSpecular" cx="0.4" cy="0.25" r="0.5">
-                    <stop offset="0%" stopColor="rgba(255,255,255,0.75)" />
-                    <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-                </radialGradient>
             </defs>
 
             {/* Cranium */}
             <ellipse cx="22" cy="17" rx="19" ry="17" fill="url(#crSkullMetal)" stroke="#555" strokeWidth="0.6" />
-            {/* Specular highlight on forehead */}
-            <ellipse cx="17" cy="11" rx="9" ry="6" fill="url(#crSpecular)" />
+            
+            {/* Simple highlight instead of radialGradient */}
+            <ellipse cx="17" cy="11" rx="9" ry="6" fill="#FFFFFF" opacity="0.4" />
 
             {/* Cheekbones / face plate */}
             <path d="M5 20 L10 34 H34 L39 20 Q38 16 22 15 Q6 16 5 20Z" fill="url(#crSkullMetal)" stroke="#555" strokeWidth="0.5" />
@@ -114,12 +105,12 @@ function ChromeSkull() {
             <ellipse cx="14" cy="21" rx="5.5" ry="5" fill="#050505" />
             <ellipse cx="30" cy="21" rx="5.5" ry="5" fill="#050505" />
 
-            {/* Glowing red eyes — pulsing */}
-            <circle cx="14" cy="21" r="3" fill="#FF0000" filter="url(#crEyeGlow)">
+            {/* Glowing red eyes — simple drop-shadow instead of SVG filter */}
+            <circle cx="14" cy="21" r="3" fill="#FF0000" style={{ filter: "drop-shadow(0 0 3px #FF0000)" }}>
                 <animate attributeName="r" values="3;2.2;3" dur="1.6s" repeatCount="indefinite" />
                 <animate attributeName="opacity" values="1;0.5;1" dur="1.6s" repeatCount="indefinite" />
             </circle>
-            <circle cx="30" cy="21" r="3" fill="#FF0000" filter="url(#crEyeGlow)">
+            <circle cx="30" cy="21" r="3" fill="#FF0000" style={{ filter: "drop-shadow(0 0 3px #FF0000)" }}>
                 <animate attributeName="r" values="3;2.2;3" dur="1.6s" repeatCount="indefinite" />
                 <animate attributeName="opacity" values="1;0.5;1" dur="1.6s" repeatCount="indefinite" />
             </circle>
@@ -147,6 +138,58 @@ function ChromeSkull() {
     );
 }
 
+const MemoizedBackground = React.memo(() => (
+    <>
+        {/* ── PARALLAX MATRIX LAYER (Deep background) ── */}
+        <div
+            className="absolute inset-0 pointer-events-none opacity-[0.25]"
+            style={{ zIndex: 0, overflow: "hidden" }}
+        >
+            <div
+                style={{
+                    width: "100%", height: "200%",
+                    display: "flex", flexWrap: "wrap",
+                    fontFamily: "monospace", fontSize: "16px",
+                    lineHeight: "16px", color: "rgba(229,0,0,0.8)",
+                    wordBreak: "break-all", whiteSpace: "pre-wrap",
+                    animation: "matrix-fall 24s linear infinite",
+                }}
+            >
+                {"0 1 1 0 0 1 ".repeat(600)}
+            </div>
+        </div>
+
+        {/* ── PERMANENT Tron Grid Floor ── */}
+        <div
+            className="cr-floor absolute left-0 right-0 pointer-events-none"
+            style={{
+                top: FLOOR_Y, height: GAME_H - FLOOR_Y, zIndex: 1,
+                backgroundImage: `
+                    linear-gradient(to bottom, rgba(229,0,0,0.18) 0%, rgba(229,0,0,0.04) 100%),
+                    repeating-linear-gradient(90deg, rgba(229,0,0,0.14) 0px, rgba(229,0,0,0.14) 1px, transparent 1px, transparent 40px),
+                    repeating-linear-gradient(0deg, rgba(229,0,0,0.10) 0px, rgba(229,0,0,0.10) 1px, transparent 1px, transparent 20px)
+                `,
+            }}
+        />
+        {/* Perspective vanishing lines */}
+        <div
+            className="absolute left-0 right-0 pointer-events-none"
+            style={{
+                top: FLOOR_Y, height: GAME_H - FLOOR_Y, zIndex: 1,
+                background: `
+                    linear-gradient(75deg, transparent 48%, rgba(229,0,0,0.06) 49%, rgba(229,0,0,0.06) 51%, transparent 52%),
+                    linear-gradient(105deg, transparent 48%, rgba(229,0,0,0.06) 49%, rgba(229,0,0,0.06) 51%, transparent 52%)
+                `,
+            }}
+        />
+        {/* Floor line — always visible, above overlays */}
+        <div
+            className="absolute left-0 right-0 pointer-events-none"
+            style={{ top: FLOOR_Y, height: "1px", zIndex: 250, background: "linear-gradient(to right, transparent, rgba(229,0,0,0.6) 15%, rgba(229,0,0,0.6) 85%, transparent)" }}
+        />
+    </>
+));
+
 /* ══════════════════════════════════════════════════════
    MAIN COMPONENT
    ══════════════════════════════════════════════════════ */
@@ -163,6 +206,8 @@ export default function CromoRunner({ onClose }: { onClose: () => void }) {
     const speedRef = useRef(BASE_SPEED);
     const gameRunning = useRef(false);
     const rafId = useRef<number>(0);
+    const displayY = useRef(GROUND_LEVEL);
+    const lastTime = useRef<number>(0);
 
     // ── React state ──
     const [score, setScore] = useState(0);
@@ -192,10 +237,6 @@ export default function CromoRunner({ onClose }: { onClose: () => void }) {
 
     // ── Ensure Tone.js is started (needs user gesture) ──
     const ensureTone = useCallback(async () => {
-        if (!toneStarted.current) {
-            await Tone.start();
-            toneStarted.current = true;
-        }
         if (!jumpSynth.current) {
             jumpSynth.current = new Tone.PolySynth(Tone.Synth, {
                 oscillator: { type: "square" },
@@ -212,7 +253,31 @@ export default function CromoRunner({ onClose }: { onClose: () => void }) {
             noiseFilter.current = new Tone.Filter({ frequency: 4000, type: "lowpass", rolloff: -24 }).toDestination();
             noiseSynth.current.connect(noiseFilter.current);
         }
+        if (!toneStarted.current) {
+            try {
+                await Tone.start();
+                toneStarted.current = true;
+            } catch (e) {
+                console.warn("Tone.start failed", e);
+            }
+        }
     }, []);
+
+    // ── Global initial Tone.start on first interaction ──
+    useEffect(() => {
+        const initAudio = () => {
+             ensureTone();
+             // Remove listeners once executed
+             window.removeEventListener("pointerdown", initAudio);
+             window.removeEventListener("keydown", initAudio);
+        };
+        window.addEventListener("pointerdown", initAudio);
+        window.addEventListener("keydown", initAudio);
+        return () => {
+            window.removeEventListener("pointerdown", initAudio);
+            window.removeEventListener("keydown", initAudio);
+        };
+    }, [ensureTone]);
 
     // ── Chromatic aberration trigger ──
     const triggerGlitch = useCallback(() => {
@@ -223,22 +288,28 @@ export default function CromoRunner({ onClose }: { onClose: () => void }) {
     // ── Play jump sound ──
     const playJump = useCallback(() => {
         if (mutedRef.current) return;
-        ensureTone().then(() => {
+        if (toneStarted.current) {
             jumpSynth.current?.triggerAttackRelease("C6", "0.1");
-        });
+        } else {
+            ensureTone().then(() => {
+                jumpSynth.current?.triggerAttackRelease("C6", "0.1");
+            });
+        }
     }, [ensureTone]);
 
     // ── Play lose sound ──
     const playLose = useCallback(() => {
         if (mutedRef.current) return;
-        ensureTone().then(() => {
+        const play = () => {
             noiseSynth.current?.triggerAttackRelease("2n");
             if (noiseFilter.current) {
                 // reset filter then rapid sweep down
                 noiseFilter.current.frequency.setValueAtTime(4000, Tone.now());
                 noiseFilter.current.frequency.exponentialRampToValueAtTime(100, Tone.now() + 0.5);
             }
-        });
+        };
+        if (toneStarted.current) play();
+        else ensureTone().then(play);
     }, [ensureTone]);
 
     // ── Jump ──
@@ -253,6 +324,7 @@ export default function CromoRunner({ onClose }: { onClose: () => void }) {
     // ── Start / restart ──
     const startGame = useCallback(() => {
         playerY.current = GROUND_LEVEL;
+        displayY.current = GROUND_LEVEL;
         velY.current = 0;
         onGround.current = true;
         obstacles.current = [];
@@ -262,6 +334,7 @@ export default function CromoRunner({ onClose }: { onClose: () => void }) {
         scoreRef.current = 0;
         speedRef.current = BASE_SPEED;
         gameRunning.current = true;
+        lastTime.current = performance.now();
         setScore(0);
         setGlitchActive(false);
         setGameState("playing");
@@ -273,13 +346,19 @@ export default function CromoRunner({ onClose }: { onClose: () => void }) {
     useEffect(() => {
         if (gameState !== "playing") return;
 
-        const loop = () => {
+        const loop = (time: number) => {
             if (!gameRunning.current) return;
-            frameCount.current++;
+            
+            // Delta time calculation
+            const dt = lastTime.current ? (time - lastTime.current) / (1000 / 60) : 1;
+            lastTime.current = time;
+            const safeDt = Math.min(dt, 2.0); // Clamp clamp!
+
+            frameCount.current += safeDt;
 
             // Physics — gravity always returns to GROUND_LEVEL
-            velY.current += GRAVITY;
-            playerY.current += velY.current;
+            velY.current += GRAVITY * safeDt;
+            playerY.current += velY.current * safeDt;
 
             // Clamp to floor
             if (playerY.current >= GROUND_LEVEL) {
@@ -301,7 +380,7 @@ export default function CromoRunner({ onClose }: { onClose: () => void }) {
                 velY.current = 0;
             }
 
-            speedRef.current = BASE_SPEED + Math.floor(scoreRef.current / 100) * SPEED_BUMP;
+            speedRef.current = BASE_SPEED * Math.pow(1.1, Math.floor(scoreRef.current / 150));
 
             // Spawn
             if (frameCount.current >= nextSpawn.current) {
@@ -317,18 +396,23 @@ export default function CromoRunner({ onClose }: { onClose: () => void }) {
             // Move + score
             let scored = false;
             obstacles.current = obstacles.current.filter((o) => {
-                o.x -= speedRef.current;
-                if (!scored && o.x + OBS_W < PLAYER_X && o.x + OBS_W > PLAYER_X - speedRef.current - 1) {
+                o.x -= speedRef.current * safeDt;
+                if (!scored && o.x + OBS_W < PLAYER_X && o.x + OBS_W > PLAYER_X - (speedRef.current * safeDt) - 1) {
                     scoreRef.current++;
                     scored = true;
                 }
                 return o.x > -OBS_W;
             });
 
-            // Collision
+            // Collision (10% smaller hitbox)
             const py = playerY.current;
+            const HW = PLAYER_W * 0.9;
+            const HH = PLAYER_H * 0.9;
+            const hx = PLAYER_X + (PLAYER_W - HW) / 2;
+            const hy = py + (PLAYER_H - HH) / 2;
+
             for (const o of obstacles.current) {
-                if (PLAYER_X < o.x + OBS_W && PLAYER_X + PLAYER_W > o.x && py < o.y + OBS_H && py + PLAYER_H > o.y) {
+                if (hx < o.x + OBS_W && hx + HW > o.x && hy < o.y + OBS_H && hy + HH > o.y) {
                     gameRunning.current = false;
                     playLose();
                     triggerGlitch();
@@ -347,8 +431,11 @@ export default function CromoRunner({ onClose }: { onClose: () => void }) {
 
             setScore(scoreRef.current);
 
+            // Visual Lerp
+            displayY.current += (playerY.current - displayY.current) * (1 - Math.pow(0.5, safeDt));
+
             // Direct DOM updates for 60fps
-            if (playerRef.current) playerRef.current.style.top = `${playerY.current}px`;
+            if (playerRef.current) playerRef.current.style.top = `${displayY.current}px`;
             const ct = containerRef.current;
             if (ct) {
                 ct.querySelectorAll<HTMLElement>("[data-obs]").forEach((el) => {
@@ -416,7 +503,13 @@ export default function CromoRunner({ onClose }: { onClose: () => void }) {
     const scoreDisplay = `[ PUNTAJE: ${String(score).padStart(3, "0")} ]`;
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 999, background: "#000" }}>
+        <div 
+            className="fixed inset-0 flex items-center justify-center cursor-pointer" 
+            style={{ zIndex: 999, background: "rgba(0,0,0,0.95)" }}
+            onClick={(e) => {
+                if (e.target === e.currentTarget) onClose();
+            }}
+        >
             {/* ── Full-screen CRT Scanlines ── */}
             <div
                 className="fixed inset-0 pointer-events-none"
@@ -466,62 +559,18 @@ export default function CromoRunner({ onClose }: { onClose: () => void }) {
             `}</style>
             <div
                 ref={containerRef}
-                className="relative select-none"
+                className="relative select-none cursor-default"
+                onClick={(e) => e.stopPropagation()}
                 style={{
                     width: GAME_W, height: GAME_H, maxWidth: "95vw", maxHeight: "70vh",
                     background: "#000", border: "1px solid rgba(229,0,0,0.35)",
                     aspectRatio: `${GAME_W} / ${GAME_H}`, overflow: "hidden",
                     filter: "contrast(1.2) brightness(0.8)",
+                    touchAction: "none",
                     ...glitchStyle,
                 }}
             >
-                {/* ── PARALLAX MATRIX LAYER (Deep background) ── */}
-                <div
-                    className="absolute inset-0 pointer-events-none opacity-[0.25]"
-                    style={{ zIndex: 0, overflow: "hidden" }}
-                >
-                    <div
-                        style={{
-                            width: "100%", height: "200%",
-                            display: "flex", flexWrap: "wrap",
-                            fontFamily: "monospace", fontSize: "16px",
-                            lineHeight: "16px", color: "rgba(229,0,0,0.8)",
-                            wordBreak: "break-all", whiteSpace: "pre-wrap",
-                            animation: "matrix-fall 24s linear infinite",
-                        }}
-                    >
-                        {"0 1 1 0 0 1 ".repeat(600)}
-                    </div>
-                </div>
-
-                {/* ── PERMANENT Tron Grid Floor ── */}
-                <div
-                    className="cr-floor absolute left-0 right-0 pointer-events-none"
-                    style={{
-                        top: FLOOR_Y, height: GAME_H - FLOOR_Y, zIndex: 1,
-                        backgroundImage: `
-                            linear-gradient(to bottom, rgba(229,0,0,0.18) 0%, rgba(229,0,0,0.04) 100%),
-                            repeating-linear-gradient(90deg, rgba(229,0,0,0.14) 0px, rgba(229,0,0,0.14) 1px, transparent 1px, transparent 40px),
-                            repeating-linear-gradient(0deg, rgba(229,0,0,0.10) 0px, rgba(229,0,0,0.10) 1px, transparent 1px, transparent 20px)
-                        `,
-                    }}
-                />
-                {/* Perspective vanishing lines */}
-                <div
-                    className="absolute left-0 right-0 pointer-events-none"
-                    style={{
-                        top: FLOOR_Y, height: GAME_H - FLOOR_Y, zIndex: 1,
-                        background: `
-                            linear-gradient(75deg, transparent 48%, rgba(229,0,0,0.06) 49%, rgba(229,0,0,0.06) 51%, transparent 52%),
-                            linear-gradient(105deg, transparent 48%, rgba(229,0,0,0.06) 49%, rgba(229,0,0,0.06) 51%, transparent 52%)
-                        `,
-                    }}
-                />
-                {/* Floor line — always visible, above overlays */}
-                <div
-                    className="absolute left-0 right-0 pointer-events-none"
-                    style={{ top: FLOOR_Y, height: "1px", zIndex: 250, background: "linear-gradient(to right, transparent, rgba(229,0,0,0.6) 15%, rgba(229,0,0,0.6) 85%, transparent)" }}
-                />
+                <MemoizedBackground />
 
                 {/* ── Score HUD (STATIC — never scrambles) ── */}
                 <div className="absolute top-3 left-4 pointer-events-none" style={{ zIndex: 1001 }}>
