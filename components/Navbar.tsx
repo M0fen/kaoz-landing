@@ -66,9 +66,9 @@ function ScrambleText({ text }: { text: string }) {
 
 const navLinks = [
     { href: "#inicio", label: "INICIO" },
-    { href: "#clan", label: "EL CLAN" },
+    { href: "#galeria", label: "GALERÍA" },
     { href: "#lineup", label: "LINEUP" },
-    { href: "#iniciacion", label: "INICIACIÓN" },
+    { href: "#galeria", label: "ACCESO" },
 ];
 
 /** Randomly fires a 220ms glitch on the logo every 5–12 seconds. */

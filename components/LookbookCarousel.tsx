@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /**
@@ -45,7 +45,19 @@ const KAOZ_MEDIA = [
     "/galeria9.jpg",
     "/galeria10.jpg",
     "/portadagaleria.jpg",
-    "/video_promo.mp4",
+    "/video1.mp4",
+    "/video2.mp4",
+    "/video3.mp4",
+    "/video4.mp4",
+    "/video5.mp4",
+    "/video6.mp4",
+    "/video7.mp4",
+    "/video8.mp4",
+    "/video9.mp4",
+    "/video10.mp4",
+    "/video11.mp4",
+    "/video12.mp4",
+    "/video13.mp4",
 ];
 
 const IMAGES = KAOZ_MEDIA.filter((file) => /\.(jpg|jpeg|png|webp)$/i.test(file));
@@ -55,6 +67,69 @@ const VIDEOS = KAOZ_MEDIA.filter((file) => /\.(mp4|mov|webm)$/i.test(file));
 const extractFilename = (path: string) => path.split("/").pop() || "asset";
 const getFallback = (index: number) => `https://picsum.photos/seed/kzgal${index}/800/1200`;
 const getMainFallback = () => `https://picsum.photos/seed/kz_portada/1200/800`;
+
+/**
+ * VideoThumbnail — captures a single frame from a video at seekTime
+ * and renders it as a static <img> poster via an offscreen canvas.
+ */
+function VideoThumbnail({ src, isSelected, className }: { src: string; isSelected: boolean; className: string }) {
+    const [poster, setPoster] = useState<string | null>(null);
+    const attempted = useRef(false);
+
+    const capture = useCallback(() => {
+        if (attempted.current) return;
+        attempted.current = true;
+
+        const video = document.createElement("video");
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = "metadata";
+        video.src = src;
+
+        video.addEventListener("loadeddata", () => {
+            video.currentTime = Math.min(0.5, video.duration || 0.5);
+        });
+
+        video.addEventListener("seeked", () => {
+            try {
+                const canvas = document.createElement("canvas");
+                canvas.width = video.videoWidth || 320;
+                canvas.height = video.videoHeight || 180;
+                const ctx = canvas.getContext("2d");
+                if (ctx) {
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    setPoster(canvas.toDataURL("image/jpeg", 0.7));
+                }
+            } catch { /* CORS or security — fall through to video fallback */ }
+            video.src = ""; // release memory
+        });
+
+        video.load();
+    }, [src]);
+
+    useEffect(() => { capture(); }, [capture]);
+
+    if (poster) {
+        return (
+            <img
+                src={poster}
+                alt={extractFilename(src)}
+                className={className}
+            />
+        );
+    }
+
+    // Fallback: show the <video> itself while the canvas capture is loading
+    return (
+        <video
+            src={`${src}#t=0.5`}
+            className={className}
+            muted
+            playsInline
+            preload="metadata"
+        />
+    );
+}
 
 export default function LookbookCarousel() {
     const [activeTab, setActiveTab] = useState<"IMAGENES" | "VIDEOS">("IMAGENES");
@@ -74,10 +149,6 @@ export default function LookbookCarousel() {
     };
 
     const handleModuleSelect = (src: string) => {
-        if (activeImg === src) return;
-        setActiveImg(src);
-        setScrambleTrigger((t) => t + 1);
-
         if (typeof window !== "undefined" && window.innerWidth < 768) {
             const mainViewport = document.getElementById("galeria-viewport");
             if (mainViewport) {
@@ -85,6 +156,10 @@ export default function LookbookCarousel() {
                 window.scrollTo({ top: y, behavior: "smooth" });
             }
         }
+
+        if (activeImg === src) return;
+        setActiveImg(src);
+        setScrambleTrigger((t) => t + 1);
     };
 
     const sysStatus = useTerminalScramble("// SYS.STATUS: ONLINE", scrambleTrigger);
@@ -128,8 +203,8 @@ export default function LookbookCarousel() {
                 >
                     {glitchedTitle}
                 </h2>
-                <p className="text-[10px] font-mono text-brand-red/60 tracking-[0.3em] uppercase max-w-2xl text-center">
-                    // ACCESO A TERMINAL VISUAL // {KAOZ_MEDIA.length} MODULOS DE DATA //
+                <p className="text-[10px] font-mono text-brand-red/60 tracking-[0.3em] uppercase max-w-2xl text-center animate-neon-flicker">
+                    // HECHO POR ARTISTAS // PARA ARTISTAS //
                 </p>
             </motion.div>
 
@@ -269,17 +344,12 @@ export default function LookbookCarousel() {
                                             }}
                                         />
                                     ) : (
-                                        <video
+                                        <VideoThumbnail
                                             src={src}
+                                            isSelected={isSelected}
                                             className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out ${
                                                 isSelected ? "opacity-100 mix-blend-normal" : "opacity-60 mix-blend-luminosity hover:opacity-100 hover:mix-blend-normal hover:scale-110"
                                             }`}
-                                            muted
-                                            loop
-                                            playsInline
-                                            preload="metadata"
-                                            onMouseEnter={(e) => (e.target as HTMLVideoElement).play()}
-                                            onMouseLeave={(e) => (e.target as HTMLVideoElement).pause()}
                                         />
                                     )}
 
