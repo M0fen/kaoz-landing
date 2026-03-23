@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* ─────────────────────────────────────────────────────────
-   MAIN ARTIST CARDS — 3-state machine
+   MAIN ARTIST CARDS — 2-state machine
    step 0 → front image
    step 1 → stats image
-   step 2 → YouTube iframe
+   click step 1 → open Video Modal
 ───────────────────────────────────────────────────────── */
 const MAIN_ARTISTS = [
     {
@@ -94,10 +94,60 @@ function Lightbox({ src, alt, onClose }: { src: string; alt: string; onClose: ()
     );
 }
 
+/* ──────────────────────────────────────────
+   VIDEO LIGHTBOX MODAL — full-screen overlay (mobile optimized)
+────────────────────────────────────────── */
+function VideoLightbox({ videoId, title, onClose }: { videoId: string; title: string; onClose: () => void }) {
+    // Close on Escape key
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, [onClose]);
+
+    return (
+        <div
+            className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/95 backdrop-blur-sm"
+            onClick={onClose}
+        >
+            {/* [ X ] close button */}
+            <button
+                onClick={onClose}
+                className="absolute top-4 right-4 font-mono text-brand-red border border-brand-red/60 bg-black/80 hover:bg-brand-red/10 transition-colors duration-200"
+                style={{ zIndex: 1010, padding: "4px 10px", fontSize: "11px", letterSpacing: "0.2em", lineHeight: 1.6 }}
+                aria-label="Close"
+            >
+                [ X ]
+            </button>
+            
+            {/* Responsive 16:9 container for YouTube iframe */}
+            <div 
+                className="w-full max-w-3xl aspect-video relative z-[1001] px-4"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0&showinfo=0&modestbranding=1`}
+                    title={title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full border border-brand-red/50 shadow-[0_0_30px_rgba(229,0,0,0.3)]"
+                />
+            </div>
+        </div>
+    );
+}
+
 export default function EventLineup() {
     const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
     const openLightbox = useCallback((src: string, alt: string) => setLightbox({ src, alt }), []);
     const closeLightbox = useCallback(() => setLightbox(null), []);
+
+    const [videoLightbox, setVideoLightbox] = useState<{ videoId: string; title: string } | null>(null);
+    const openVideoLightbox = useCallback((videoId: string, title: string) => setVideoLightbox({ videoId, title }), []);
+    const closeVideoLightbox = useCallback(() => setVideoLightbox(null), []);
 
     return (
         <section
@@ -207,9 +257,15 @@ export default function EventLineup() {
                 className="grid gap-4 sm:gap-6 lg:gap-8 w-full max-w-7xl mx-auto px-6 sm:px-12"
                 style={{ position: "relative", zIndex: 20, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
             >
-                {/* ── Main Artist Cards (3-state) ── */}
+                {/* ── Main Artist Cards (3-state -> 2-state with Video Modal) ── */}
                 {MAIN_ARTISTS.map((item, index) => (
-                    <ArtistCard key={item.id} item={item} index={index} onOpenLightbox={openLightbox} />
+                    <ArtistCard 
+                        key={item.id} 
+                        item={item} 
+                        index={index} 
+                        onOpenLightbox={openLightbox} 
+                        onOpenVideoLightbox={openVideoLightbox}
+                    />
                 ))}
 
                 {/* ── DJ Heading spanning full width ── */}
@@ -242,35 +298,40 @@ export default function EventLineup() {
                 <span className="absolute bottom-2.5 right-2.5 font-body text-[7px] text-brand-red tracking-widest">--- CORTE ---</span>
             </div>
 
-            {/* ── Lightbox modal ── */}
+            {/* ── Lightbox modals ── */}
             {lightbox && <Lightbox src={lightbox.src} alt={lightbox.alt} onClose={closeLightbox} />}
+            {videoLightbox && <VideoLightbox videoId={videoLightbox.videoId} title={videoLightbox.title} onClose={closeVideoLightbox} />}
         </section>
     );
 }
 
 /* ──────────────────────────────────────────
-   MAIN ARTIST CARD — 3-state with dynamic aspect ratio
+   MAIN ARTIST CARD — 2-state with dynamic features
    step 0 / 1 → portrait (aspect 3/4), object-contain
-   step 2      → widescreen (aspect 16/9), iframe
-   Click = advance state | Long-press / Ctrl+click on image = open lightbox
+   click on step 1 opens video modal
+   Long-press / Ctrl+click on image = open lightbox
 ────────────────────────────────────────── */
 function ArtistCard({
     item,
     index,
     onOpenLightbox,
+    onOpenVideoLightbox,
 }: {
     item: typeof MAIN_ARTISTS[0];
     index: number;
     onOpenLightbox: (src: string, alt: string) => void;
+    onOpenVideoLightbox: (videoId: string, title: string) => void;
 }) {
     const [step, setStep] = useState(0);
 
-    const advance = () => setStep(s => (s + 1) % 3);
+    const advance = () => {
+        if (step === 0) setStep(1);
+        else if (step === 1) onOpenVideoLightbox(item.videoId, item.title);
+    };
 
-    // Dynamic aspect ratio based on step
-    const isVideo  = step === 2;
+    // Fixed aspect ratio since video is in modal
     const aspectStyle: React.CSSProperties = {
-        aspectRatio: isVideo ? "16 / 9" : "3 / 4",
+        aspectRatio: "3 / 4",
         transition: "aspect-ratio 0s",
     };
 
@@ -284,7 +345,6 @@ function ArtistCard({
             style={{
                 ...aspectStyle,
                 background: "rgba(5,5,5,0.80)",
-                ...(isVideo ? { gridColumn: "span 2" } : {}),
             }}
             onClick={advance}
         >
@@ -366,42 +426,18 @@ function ArtistCard({
                         </div>
                         {/* Footer bar */}
                         <div className="absolute bottom-0 left-0 right-0 z-10 px-4 py-2 border-t border-brand-red/40 bg-black/70 backdrop-blur-sm flex justify-between items-center">
-                            <span className="font-mono text-[9px] text-brand-red tracking-widest uppercase">STATS // 0{index + 1}</span>
-                            <span className="font-mono text-[9px] text-silver-dim/50 tracking-widest">CROMO 2026</span>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setStep(0); }} 
+                                className="font-mono text-[9px] text-brand-red tracking-widest uppercase hover:text-white transition-colors"
+                            >
+                                ← VOLVER
+                            </button>
+                            <span className="font-mono text-[9px] text-silver-dim/50 tracking-widest">STATS // 0{index + 1}</span>
                         </div>
                     </motion.div>
                 )}
 
-                {/* ── STEP 2: YouTube iframe (widescreen) ── */}
-                {step === 2 && (
-                    <motion.div
-                        key="video"
-                        className="absolute inset-0 w-full h-full bg-[#050505] border border-brand-red/50"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.35 }}
-                    >
-                        <iframe
-                            width="100%"
-                            height="100%"
-                            src={`https://www.youtube.com/embed/${item.videoId}?controls=1&rel=0&showinfo=0&modestbranding=1&autoplay=1`}
-                            title={item.title}
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            className="absolute inset-0 w-full h-full"
-                        />
-                        {/* Thin top bar to close video */}
-                        <div
-                            className="absolute top-0 left-0 right-0 h-6 z-20 cursor-pointer flex items-center px-2 gap-1"
-                            style={{ background: "rgba(5,5,5,0.7)" }}
-                            onClick={(e) => { e.stopPropagation(); setStep(0); }}
-                        >
-                            <span className="font-mono text-[8px] text-brand-red tracking-[0.25em] uppercase">← CERRAR</span>
-                        </div>
-                    </motion.div>
-                )}
+
             </AnimatePresence>
         </motion.div>
     );

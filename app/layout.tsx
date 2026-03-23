@@ -39,8 +39,14 @@ const orbitron = Orbitron({
 });
 
 export const metadata: Metadata = {
-  title: "DOBLE KAOZ | cromo Collection",
-  description: "Doble Kaoz - Underground Techwear & Acid Graphics Fashion",
+  title: "KAOZ | CROMO COLLECTION",
+  description: "// HECHO POR ARTISTAS // PARA ARTISTAS // Acceso a la terminal visual y sonora.",
+  openGraph: {
+    title: "KAOZ | CROMO COLLECTION",
+    description: "// HECHO POR ARTISTAS // PARA ARTISTAS // Acceso a la terminal visual y sonora.",
+    type: "website",
+    images: [{ url: "/portadagaleria.jpg" }],
+  },
 };
 
 export default function RootLayout({
